@@ -1,0 +1,17 @@
+server:
+  port: 80
+  servlet:
+    context-path: /myapp
+  tomcat:
+    accept-count: 5
+    max-threads: 5  
+spring:
+  mvc:
+    view:
+      prefix: /page/
+      suffix: .html
+  jmx:
+    enabled: false
+    
+        
+   

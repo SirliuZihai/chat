@@ -1,0 +1,57 @@
+package com.zihai.websocket.util;
+
+import javax.websocket.Session;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 功能说明：用来存储业务定义的sessionId和连接的对应关系
+ * 利用业务逻辑中组装的sessionId获取有效连接后进行后续操作
+*/
+public class SessionUtils {
+
+ public static Map<String, Session> clients = new ConcurrentHashMap<>();
+
+ public static void put(String relationId, String userCode, Session session){
+ clients.put(getKey(relationId, userCode), session);
+}
+
+ public static Session get(String relationId, String userCode){
+ return clients.get(getKey(relationId, userCode));
+}
+
+ public static void remove(String relationId, String userCode){
+ clients.remove(getKey(relationId, userCode));
+}
+
+/**
+ * 判断是否有连接
+ * @param relationId
+ * @param userCode
+ * @return
+*/
+ public static boolean hasConnection(String relationId, String userCode) {
+ return clients.containsKey(getKey(relationId, userCode));
+}
+
+/**
+ * 组装唯一识别的key
+ * @param relationId
+ * @param userCode
+ * @return
+*/
+ public static String getKey(String relationId, String userCode) {
+ return relationId +"_"+ userCode;
+}
+ public static Set<Session> getRelativeSession(String relationId){
+	 Set<Session> sessions = new HashSet<Session>();
+	 for(String key :clients.keySet()){
+		 if(key.startsWith(relationId))
+			 sessions.add(clients.get(key));
+	 }
+	 return sessions;
+ }
+}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Chat App</title>
+  
+  <!-- Scripts -->
+  <script src="./dist/js/framework7.min.js"></script>
+  <script src="./dist/js/lib/vue.min.js"></script>
+  <!-- <script src="/dist/js/lib/framework7-vue.min.js"></script> -->
+  <!-- End scripts -->
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="./dist/css/framework7.min.css">
+  <!-- End styles -->
+
+</head>
+
+<body>
+  <div class="framework7-root" id="app">
+      <div class="view view-main view-init">
+        <div class="page page-current">
+          
+          <div class="page-content">
+            <div class="block">
+              <p>
+                <a class="button login-screen-open" href="#" data-login-screen=".login-screen">Open As Modal</a>
+              </p>
+              <p>
+                <!-- Load page with login screen--><a class="button" href="/login-screen/">Open As Page</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="login-screen">
+        <div class="view">
+          <div class="page">
+            <div class="page-content login-screen-content">
+              <div class="login-screen-title">My App</div>
+              <form>
+                <div class="list">
+                  <ul>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Username</div>
+                        <div class="item-input-wrap">
+                          <input name="username" type="text" placeholder="Your username">
+                        </div>
+                      </div>
+                    </li>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Password</div>
+                        <div class="item-input-wrap">
+                          <input name="password" type="password" placeholder="Your password">
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="list">
+                  <ul>
+                    <li><a class="item-link list-button" href="#">Sign In</a></li>
+                  </ul>
+                  <div class="block-footer">
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                    <p><a class="link login-screen-close" href="#">Close Login Screen</a></p>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+    
+    var $$ = Dom7;
+
+    var app = new Framework7({
+     el:"#app",
+      routes: [{
+        path: '/login-screen/',
+        /*
+        We can load it from url like:
+        url: 'login-screen.html'
+        But in this example we load it just from content string
+        */
+        content: '\
+          <div class="page no-navbar no-toolbar no-swipeback">\
+            <div class="page-content login-screen-content">\
+              <div class="login-screen-title">My App</div>\
+              <form>\
+                <div class="list">\
+                </div>\
+                <div class="list">\
+                  <ul>\
+                    <li><a href="#" class="item-link list-button">Sign In</a></li>\
+                  </ul>\
+                  <div class="block-footer">\
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>\
+                    <p><a href="#" class="link back">Close Login Screen</a></p>\
+                  </div>\
+                </div>\
+              </form>\
+            </div>\
+          </div>'
+        }]
+    });
+
+    // Login Screen-Modal DOM events
+    $$('.login-screen').on('loginscreen:open', function (e, loginScreen) {
+      console.log('Login screen open')
+    });
+    $$('.login-screen').on('loginscreen:opened', function (e, loginScreen) {
+      console.log('Login screen opened')
+    });
+    $$('.login-screen').on('loginscreen:close', function (e, loginScreen) {
+      console.log('Login screen close')
+    });
+    $$('.login-screen').on('loginscreen:closed', function (e, loginScreen) {
+      console.log('Login screen closed')
+    });
+    </script>
+</body>
+
+
+</html>
