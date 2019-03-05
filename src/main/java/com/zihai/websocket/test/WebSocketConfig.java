@@ -12,7 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  * */
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 @Configuration
-//s@EnableWebSocket
+//@EnableWebSocket
 public class WebSocketConfig 
 //implements WebSocketConfigurer 
 {

@@ -2,16 +2,23 @@ server:
   port: 80
   servlet:
     context-path: /myapp
+    session:
+      cookie:
+        path: /
+        max-age: 999999999  
+      timeout: 999999999  
   tomcat:
     accept-count: 5
     max-threads: 5  
 spring:
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
   mvc:
     view:
       prefix: /page/
       suffix: .html
   jmx:
     enabled: false
-    
-        
-   
+       

@@ -161,14 +161,20 @@
                 }
                 //states.msgs.length = 0;
               // this.$f7.views.main.router.load({url: '/page-chat/'});
-                initSocket(states.name.trim());
+                initSocket(states.name.trim());  
             },
             login:function(){
             	localStorage.setItem("name", this.chatdata.name);
             },
             testrouter:function(){
-            	this.$f7.views.main.router.load({componentUrl: '/about/'});
-            }
+            	//this.$f7.views.main.router.load({“componentUrl: '/about/'});
+            	this.$f7.views.main.router.navigate('/about/');
+            	this.panel.close();
+            },
+            backward:function(){},
+            forward:function(){}
+            
+            
         },
     	  mounted:function(){
     		  
