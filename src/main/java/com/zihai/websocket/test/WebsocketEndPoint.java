@@ -1,6 +1,8 @@
 package com.zihai.websocket.test;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -12,11 +14,16 @@ import javax.websocket.server.ServerEndpoint;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bson.BsonArray;
+import org.bson.BsonObjectId;
+import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.server.standard.SpringConfigurator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zihai.chat.entity.Message;
+import com.zihai.event.service.EventService;
 import com.zihai.websocket.util.SessionUtils;
 
 
@@ -24,18 +31,19 @@ import com.zihai.websocket.util.SessionUtils;
 /**
  * 功能说明：websocket处理类, 使用J2EE7的标准
  * 切忌直接在该连接处理类中加入业务处理代码
- * 作者：liu(2014-11-14 04:20)
 */
 //relationId和userCode是我的业务标识参数,websocket.ws是连接的路径，可以自行定义
-@ServerEndpoint("/websocket/{relationId}/{userCode}")
-@Component
+//@Component
+//@ServerEndpoint(value="/websocket/{relationId}/{userCode}",configurator = SpringConfigurator.class)
 public class WebsocketEndPoint {
+	 private Log log = LogFactory.getLog(WebsocketEndPoint.class);
 
- private Log log = LogFactory.getLog(WebsocketEndPoint.class);
- 
-/* WebsocketEndPoint(){
-	 log.info("websockt JAVAEE7 initialized");
- }*/
+	@Autowired
+	private EventService eventService;
+
+	WebsocketEndPoint(){
+		log.info("init");
+	}
 
 /**
  * 打开连接时触发
@@ -60,15 +68,12 @@ public class WebsocketEndPoint {
 */
 @OnMessage
  public void onMessage(@PathParam("relationId") String relationId,
- @PathParam("userCode") String userCode,String text) throws JsonProcessingException {
+ @PathParam("userCode") String userCode,String text,Session session) throws JsonProcessingException {
  if("heartbeat[myapp]".equals(text)){
 	 log.info("heartbeat from "+userCode);
 	 return;
  }
- String str = new ObjectMapper().writeValueAsString(new Message(userCode,text));
- for(Session session :SessionUtils.getRelativeSession(relationId)){
-	 session.getAsyncRemote().sendText(str);
- }
+ log.info(session.getUserPrincipal()+" "+session.getId()+" ===="+text);
 }
 
 /**

@@ -11,10 +11,9 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  * 使用springboot的唯一区别是要@Component声明下，而使用独立容器是由容器自己管理websocket的，但在springboot中连容器都是spring管理的。
  * */
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+@EnableWebSocket
 @Configuration
-//@EnableWebSocket
-public class WebSocketConfig 
-//implements WebSocketConfigurer 
+public class WebSocketConfig implements WebSocketConfigurer 
 {
 	Logger log =  LoggerFactory.getLogger(getClass());
 	
@@ -25,15 +24,16 @@ public class WebSocketConfig
 		return new ServerEndpointExporter();
 	}
 
-/*	@Override
+	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		log.info(getClass().getSimpleName()+" registring");
-		registry.addHandler(marchHandler(), "/wstest");
+		registry.addHandler(marchHandler(), "/websocket/homeview.do")
+		.setAllowedOrigins("*");
 	}
 	
 	@Bean
-	public MyHandler marchHandler(){
-		return new MyHandler();
-	}*/
+	public HomeEventHandler marchHandler(){
+		return new HomeEventHandler();
+	}
 }
 

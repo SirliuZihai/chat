@@ -1,4 +1,4 @@
-package com.zihai.shiro.filter;
+package com.zihai.filter;
 
 import java.io.BufferedReader;
 import java.io.IOException;

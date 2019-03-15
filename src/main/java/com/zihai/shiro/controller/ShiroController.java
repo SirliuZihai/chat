@@ -49,23 +49,24 @@ public class ShiroController {
 	
 	@RequestMapping(path="/login.do",method=RequestMethod.POST)
 	@ResponseBody
-	public String LoginIn(@RequestBody Map<String,String> user){
+	public Result LoginIn(@RequestBody Map<String,String> user){
 		UsernamePasswordToken token = new UsernamePasswordToken((String)user.get("username"),(String)user.get("password"));		
 		if(StringUtils.isEmpty(user.get("username"))||StringUtils.isEmpty(user.get("password"))){
-			return "用户名或密码不能为空";
+			return Result.failure("用户名或密码不能为空");
 		}
 		try{
 			SecurityUtils.getSubject().login(token);
 			token.setRememberMe(true);
-			return "OK";
+			Map data = userService.findInfoByUsername(user.get("username"));
+			return Result.success("登录成功",data);
 		}catch(UnknownAccountException e){
-			return "用户名或密码不正确";
+			return Result.failure("用户名或密码不正确");
 		}catch(LockedAccountException e){
-			return "该用户已禁用，请与管理员联系";
+			return Result.failure("该用户已禁用，请与管理员联系");
 		}catch(AuthenticationException e){
-			return "用户名或密码不正确";
+			return Result.failure("用户名或密码不正确");
 		}catch(Exception e){
-			return "登录失败";
+			return Result.failure("登录失败");
 		}
 		
 	}
