@@ -51,27 +51,30 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public List queryHistroy(Map filter1,String username) {
 		 Document filter = new Document();
-		 Document filter_time = new Document();
-		 if(!StringUtils.isEmpty((String)filter1.get("starttime"))){
-			 ObjectId startId = new ObjectId((String)filter1.get("starttime"));
-			 filter_time.append("$gt",startId);
-		 }
-		 if(!StringUtils.isEmpty((String)filter1.get("starttime"))){
-			 ObjectId endId = new ObjectId((String)filter1.get("endtime"));
-			 filter_time.append("$lt", endId);
-		 }
-		 if(filter_time.size()>0)
-			 filter.append("_id", filter_time);
+		 Set<Document> and_set = new HashSet<Document>();		 
 		 if(!StringUtils.isEmpty((String)filter1.get("title"))){
-			 filter.append("title", new Document("$regex",(String)filter1.get("title")).append("$options", "si"));		 }
-		 
+			 and_set.add(new Document("title", new Document("$regex",(String)filter1.get("title")).append("$options", "si")));
+		 }
+		 //关联人
 		Set<Document> or_set = new HashSet<Document>();
 		or_set.add(new Document("username", username));
 		List<String> re_list = new ArrayList<String>();
 		re_list.add(username);
 		or_set.add(new Document("relationship", re_list));
-		filter.append("$or", or_set);
-		return MongoUtil.Query(filter, null, Document.class, "event");
+		and_set.add(new Document("$or", or_set));
+		//查询时间
+		Set<Document> filter_time = new HashSet<Document>();
+		 String temp;
+		 if(!StringUtils.isEmpty(temp =(String)filter1.get("endtime"))){
+			 filter_time.add(new Document("starttime",new Document("$lte",temp)));
+		 }
+		 if(!StringUtils.isEmpty(temp = (String)filter1.get("starttime"))){
+			 filter_time.add(new Document("endtime",new Document("$gte",temp)));
+		 }	 
+		 if(filter_time.size()>0)
+			 and_set.add(new Document("$or", filter_time));
+		 Document filter2 = new Document("$and",and_set);
+		return MongoUtil.Query(filter2, null, Document.class, "event");
 	}
 	@Override
 	public List<Document> queryNoSendEvent(String username) {
@@ -104,7 +107,7 @@ public class EventServiceImpl implements EventService {
 			MongoUtil.getCollection("event").insertOne(event);
 		}else{
 			Object old_id = event.get("_id");
-			event.put("_id", new ObjectId());
+			event.remove("_id");
 			Document theupdate = MongoUtil.getCollection("event").findOneAndUpdate(new Document().append("_id", MongoUtil.getObjectId((Map)old_id)), new Document("$set",event));	
 			if(theupdate == null)
 				throw new BusinessException("该记录已被移除");
