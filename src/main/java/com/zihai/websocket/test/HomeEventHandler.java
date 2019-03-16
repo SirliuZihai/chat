@@ -30,7 +30,7 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 	protected void handleTextMessage(WebSocketSession session,TextMessage message)throws Exception{
 		 String username = session.getPrincipal().toString();
 		if("heartbeat[myapp]".equals(message.getPayload())){
-			log.info("heartbeat from "+session.getPrincipal().toString());
+			log.debug("heartbeat from "+session.getPrincipal().toString());
 			return;
 		}
 		if("receive Home date".equals(message.getPayload())){
@@ -50,13 +50,13 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 	@Override
 	public  void afterConnectionEstablished(WebSocketSession session){
 		clients.put(session.getPrincipal().toString(), (WebSocketSession) session);
-		log.info(session.getPrincipal()+"esablished");
+		log.debug(session.getPrincipal()+"esablished");
 	}
 	
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
 		clients.remove(session.getPrincipal().toString());
-		log.info(session.getPrincipal()+"closed");
+		log.debug(session.getPrincipal()+"closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {

@@ -21,4 +21,12 @@ spring:
       suffix: .html
   jmx:
     enabled: false
-       
+  devtools:
+    restart:
+      enabled: false
+logging:
+  level:
+    root: info
+    org.springframework.boot.autoconfigure: ERROR 
+    org.mongodb.driver: ERROR
+    com.zihai.websocket.test.HomeEventHandler: DEBUG
