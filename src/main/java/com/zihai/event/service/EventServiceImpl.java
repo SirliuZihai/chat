@@ -24,6 +24,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
 import com.zihai.util.BusinessException;
@@ -36,15 +37,50 @@ public class EventServiceImpl implements EventService {
 	
 	@Autowired
 	private HomeEventHandler homeEventHandler;
+	
+	@Autowired
+	private HomeEventHandler eventChatHandler;
 
 	@Override
-	public void InsertMessage(Map message) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void updateState(Map map) {
+	public void insertMessage(Document message) throws IOException {
+		//insert message 
+		MongoUtil.getCollection("message").insertOne(message.append("_id", new ObjectId()));
+		//insert event_queue
+		List<Document> list = new ArrayList<Document>();
+		list.add(new Document("_id", new ObjectId()).append("username",message.getString("sender")).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
+		if(CollectionUtils.isEmpty(message.getList("receiver", String.class))){
+			//send all
+			List<String> relationship = MongoUtil.getCollection("event").find(new Document("_id",message.getObjectId("relateId"))).first().getList("relationship", String.class);
+			if(CollectionUtils.isNotEmpty(relationship)){
+				for(String other : relationship){
+					list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("relateId")).append("type", 1).append("state", 0));
+				}
+			}
+		}else{
+			//send to receiver in events
+			for(String other : message.getList("relationship", String.class)){
+				list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
+			}
+		}
+		MongoUtil.getCollection("event_queue").insertMany(list);
+		//have a try to send event directory
+		message.put("_id", message.getObjectId("_id").toHexString());
+		message.put("relateId", message.getObjectId("relateId").toHexString());
+		for(Document send : list){
+			WebSocketSession session;
+			//is in chat room 
+			session = eventChatHandler.clients.get(send.getObjectId("eventId").toHexString()+"|"+(String)send.get("username"));
+			//is online in homeview
+			if(session == null)
+				session = homeEventHandler.clients.get((String)send.get("username"));
+			if(session!=null){
+				List list_event = new ArrayList<Document>();	
+				list_event.add(message);
+				String result = new ObjectMapper().writeValueAsString(list_event);				
+				session.sendMessage(new TextMessage("0001"+result));	
+				updateEventState(send);
+			}
+		}
 
 	}
 
@@ -78,7 +114,8 @@ public class EventServiceImpl implements EventService {
 	}
 	@Override
 	public List<Document> queryNoSendEvent(String username) {
-		Document filter = new Document().append("username", username).append("state", 0);
+		//event push
+		Document filter = new Document("username", username).append("state", 0).append("type", 0);
 		List<Bson> criteria = new ArrayList<Bson>();
 		criteria.add(new Document().append("$lookup", new Document().append("from", "event")
 				.append("localField", "eventId").append("foreignField", "_id").append("as", "e")));
@@ -86,52 +123,89 @@ public class EventServiceImpl implements EventService {
 		criteria.add(new Document().append("$unwind",new Document().append("path", "$e").append("preserveNullAndEmptyArrays", true)));
 		criteria.add(new Document().append("$sort",new Document().append("e._id", 1)));
 		criteria.add(new Document().append("$project",new Document().append("e", 1).append("_id", 0)));
-		System.out.println(JSON.toJSONString(criteria));
+		log.info("queryNoSendEvent filter1 ==="+ JSON.toJSONString(criteria)); //956518959 
 		List<Document> l = new ArrayList<Document>();
 		Block<Document> block = new Block<Document>() {
 			@Override
 		       public void apply(final Document document) {
-				l.add((Document) document.get("e"));
+				Document e =(Document) document.get("e");
+				e.put("_id", e.getObjectId("_id").toHexString());
+				l.add(e);
 		       }
 		};
-		MongoUtil.getCollection("event_queue").aggregate(criteria).forEach(block);;
-		System.out.println(JSON.toJSONString(l));		
+		MongoUtil.getCollection("event_queue").aggregate(criteria).forEach(block);				
+		log.info("queryNoSendEvent filter2 ==="+ JSON.toJSONString(criteria)); 
+		System.out.println(JSON.toJSONString(l));
 		return l;
 	}
-
+	@Override
+	public List<Document> queryNoSendMessage(String username) {
+		//event push
+		Document filter = new Document("username", username).append("state", 0).append("type", 1);
+		List<Document> criteria = new ArrayList<Document>();
+		criteria.add(new Document().append("$lookup", new Document().append("from", "message")
+				.append("localField", "eventId").append("foreignField", "_id").append("as", "e")));
+		criteria.add(new Document().append("$match", filter));
+		criteria.add(new Document().append("$unwind",new Document().append("path", "$m").append("preserveNullAndEmptyArrays", true)));
+		criteria.add(new Document().append("$sort",new Document().append("m._id", 1)));
+		criteria.add(new Document().append("$project",new Document().append("m", 1).append("_id", 0)));
+		log.info("queryNoSendMessage filter1 ==="+ JSON.toJSONString(criteria)); 
+		List<Document> l = new ArrayList<Document>();
+		Block<Document> block = new Block<Document>() {
+			@Override
+		       public void apply(final Document document) {
+				Document m =(Document) document.get("m");
+				if(m != null){
+					m.put("_id", m.getObjectId("_id").toHexString());
+					m.put("relateId", m.getObjectId("relateId").toHexString());
+					l.add(m);
+				}
+		       }
+		};
+		MongoUtil.getCollection("event_queue").aggregate(criteria).forEach(block);				
+		log.info("queryNoSendMessage result ==="+JSON.toJSONString(l));
+		return l;
+	}
 	@Override
 	public void save(Document event) throws IOException {
-		//save or update
-		if(!event.containsKey("_id")){
+		Subject currentUser = SecurityUtils.getSubject();
+		String username = (String)currentUser.getPrincipal();
+		event.remove("num");
+		String message; //save or update
+ 		if(!event.containsKey("_id")){
 			event.append("_id", new ObjectId());
 			MongoUtil.getCollection("event").insertOne(event);
+			message = username+"新建了该事件";
 		}else{
-			Object old_id = event.get("_id");
-			event.remove("_id");
-			Document theupdate = MongoUtil.getCollection("event").findOneAndUpdate(new Document().append("_id", MongoUtil.getObjectId((Map)old_id)), new Document("$set",event));	
+			event.put("_id", new ObjectId(event.getString("_id")));
+			Document theupdate = MongoUtil.getCollection("event").findOneAndReplace(new Document("_id", event.getObjectId("_id")), event);				
 			if(theupdate == null)
 				throw new BusinessException("该记录已被移除");
+			message = username+"更新了该事件";
 		}
 		//add notify others and self into event_queue
 		List<Document> list = new ArrayList<Document>();
 		if(!CollectionUtils.isEmpty((Collection<?>) event.get("relationship")))
 		for(String other : event.getList("relationship", String.class)){
-			list.add(new Document().append("_id", new ObjectId()).append("username", other).append("eventId", event.get("_id")).append("state", 0));
+			list.add(new Document().append("_id", new ObjectId()).append("username", other).append("eventId", event.get("_id")).append("type", 0).append("state", 0));
 		}
-		list.add(new Document().append("_id", new ObjectId()).append("username", (String)event.get("username")).append("eventId", event.get("_id")).append("state", 0));
+		list.add(new Document().append("_id", new ObjectId()).append("username", (String)event.get("username")).append("eventId", event.get("_id")).append("type", 0).append("state", 0));
 		MongoUtil.getCollection("event_queue").insertMany(list);
 		
 		//have a try to send event directory
+		event.put("_id", event.getObjectId("_id").toHexString());
 		for(Document send : list){
 			WebSocketSession session = homeEventHandler.clients.get((String)send.get("username"));
 			if(session!=null){
 				List list_event = new ArrayList<Document>();
 				list_event.add(event);
 				String result = new ObjectMapper().writeValueAsString(list_event);				
-				session.sendMessage(new TextMessage(result));	
+				session.sendMessage(new TextMessage("0000"+result));	
 				updateEventState(send);
 			}
 		}
+		insertMessage(new Document("relateId",new ObjectId(event.getString("_id"))).append("data", message).append("type", "operate").append("sender", username));
+
 	}
 
 	@Override

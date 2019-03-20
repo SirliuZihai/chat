@@ -36,12 +36,19 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 		if("receive Home date".equals(message.getPayload())){
 			 Document event = new Document().append("username", username);
 			 @SuppressWarnings("unchecked")
-			 List<Document> list = eventService.queryNoSendEvent(username);
+			 List<Document> list = eventService.queryNoSendEvent(username);		
 			 String result = new ObjectMapper().writeValueAsString(list);
-			 session.sendMessage(new TextMessage(result));
+			 session.sendMessage(new TextMessage("0000"+result));
+			 List<Document> list2 = eventService.queryNoSendMessage(username);		
+			 String result2 = new ObjectMapper().writeValueAsString(list);
+			 session.sendMessage(new TextMessage("0001"+result2));
+			 
 			 Set<ObjectId> inArray = new HashSet<ObjectId>();
 			 for(Document d : list){
-				 inArray.add((ObjectId)(d.get("_id")));
+				 inArray.add(new ObjectId(d.getString("_id")));
+			 }
+			 for(Document d : list2){
+				 inArray.add(new ObjectId(d.getString("_id")));
 			 }
 			 eventService.updateEventState(new Document().append("username",username)
 			 .append("eventId", new Document().append("$in", inArray)));

@@ -39,8 +39,9 @@ public class EventController {
 			eventService.save(event);
 			return Result.success("保存成功");
 		} catch (Exception e) {
+			e.printStackTrace();
 			return Result.failure("错误："+e.getMessage());
-		}		
+		}
 	}
 	@RequestMapping(value="/queryHistroy.do",method = RequestMethod.POST)
 	@ResponseBody
@@ -57,7 +58,7 @@ public class EventController {
 	@ResponseBody
 	public Result deletEvent(@RequestBody Map<String,Object> event){
 		 try {
-			Document filter = new Document("_id",MongoUtil.getObjectId((Map<String,Object>)event.get("_id"))).append("username", event.get("username"));
+			Document filter = new Document("_id",new ObjectId((String)event.get("_id"))).append("username", event.get("username"));
 			eventService.deleteEvent(filter);
 			return Result.success("删除成功");
 		} catch (Exception e) {

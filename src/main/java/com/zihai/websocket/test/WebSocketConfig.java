@@ -28,12 +28,17 @@ public class WebSocketConfig implements WebSocketConfigurer
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		log.info(getClass().getSimpleName()+" registring");
 		registry.addHandler(marchHandler(), "/websocket/homeview.do")
+		.addHandler(marchHandler2(), "/websocket/chatview.do")
 		.setAllowedOrigins("*");
 	}
 	
 	@Bean
 	public HomeEventHandler marchHandler(){
 		return new HomeEventHandler();
+	}
+	@Bean
+	public EventChatHandler marchHandler2(){
+		return new EventChatHandler();
 	}
 }
 

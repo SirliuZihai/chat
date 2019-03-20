@@ -12,13 +12,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 public interface EventService {
 	/**
 	 * 录入消息
+	 * @throws JsonProcessingException 
+	 * @throws IOException 
 	 * */
-	public void InsertMessage(Map message);
+	public void insertMessage(Document message) throws IOException;
 	
-	/**
-	 * 更新消息状态
-	 * */
-	public void updateState(Map message);
 
 	/**
 	 * 删除事件  （如果是本人创建的，直接删除，否则，删除关联人。）
@@ -33,8 +31,16 @@ public interface EventService {
 	 * 查询示所有发送事件
 	 * */
 	public List<Document> queryNoSendEvent(String username);
+	/**
+	 * 查询示所有发送的消息
+	 * */
+	public List<Document> queryNoSendMessage(String username);
+
 	
 	public void updateEventState(Document filter);
 
 	public void save(Document event) throws IOException;
+
+
+
 }

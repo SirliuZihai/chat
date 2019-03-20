@@ -36,6 +36,8 @@ public class MongoUtil {
 		Block<Document> block = new Block<Document>() {
 			@Override
 		       public void apply(final Document document) {
+					if(document.get("_id")!=null)
+						document.put("_id", document.getObjectId("_id").toHexString());
 					if(clazz == Document.class){
 						list.add(document);
 					}else{
@@ -43,8 +45,9 @@ public class MongoUtil {
 					}
 		       }
 		};
-		log.info(doc.toJson());
+		log.info("Query filter ==="+ doc.toJson());
 		getCollection(collectionName).find(doc).projection(projection).sort(new Document("_id",-1)).limit(20).forEach(block);
+		log.info("Query result ==="+ doc.toJson());
 		return list;
 		
 	}
