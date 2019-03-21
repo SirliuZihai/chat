@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
+import com.zihai.websocket.test.EventChatHandler;
 import com.zihai.websocket.test.HomeEventHandler;
 
 @Service("eventService")
@@ -39,7 +40,7 @@ public class EventServiceImpl implements EventService {
 	private HomeEventHandler homeEventHandler;
 	
 	@Autowired
-	private HomeEventHandler eventChatHandler;
+	private EventChatHandler eventChatHandler;
 
 	@Override
 	public void insertMessage(Document message) throws IOException {
@@ -47,19 +48,20 @@ public class EventServiceImpl implements EventService {
 		MongoUtil.getCollection("message").insertOne(message.append("_id", new ObjectId()));
 		//insert event_queue
 		List<Document> list = new ArrayList<Document>();
+		//send to yourself
 		list.add(new Document("_id", new ObjectId()).append("username",message.getString("sender")).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 		if(CollectionUtils.isEmpty(message.getList("receiver", String.class))){
 			//send all
 			List<String> relationship = MongoUtil.getCollection("event").find(new Document("_id",message.getObjectId("relateId"))).first().getList("relationship", String.class);
 			if(CollectionUtils.isNotEmpty(relationship)){
 				for(String other : relationship){
-					list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("relateId")).append("type", 1).append("state", 0));
+					list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 				}
 			}
 		}else{
 			//send to receiver in events
-			for(String other : message.getList("relationship", String.class)){
-				list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
+			for(String other : message.getList("receiver", String.class)){
+				list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId",message.getObjectId("_id")).append("type", 1).append("state", 0));
 			}
 		}
 		MongoUtil.getCollection("event_queue").insertMany(list);
@@ -69,7 +71,7 @@ public class EventServiceImpl implements EventService {
 		for(Document send : list){
 			WebSocketSession session;
 			//is in chat room 
-			session = eventChatHandler.clients.get(send.getObjectId("eventId").toHexString()+"|"+(String)send.get("username"));
+			session = eventChatHandler.clients.get(message.getString("relateId")+"|"+(String)send.get("username"));
 			//is online in homeview
 			if(session == null)
 				session = homeEventHandler.clients.get((String)send.get("username"));
