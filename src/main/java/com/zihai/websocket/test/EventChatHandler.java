@@ -31,7 +31,15 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 			log.debug("heartbeat from "+session.getPrincipal().toString());
 			return;
 		}
-		eventService.insertMessage(new Document("sender",username).append("data", message.getPayload())
+		String type = null ,data=null;
+		if(message.getPayload().startsWith("[text]:")){
+			type = "text";
+			data = message.getPayload().substring(7);
+		}else if(message.getPayload().startsWith("[image]:")){
+			type = "image";
+			data = message.getPayload().substring(8);
+		}
+		eventService.insertMessage(new Document("sender",username).append("data", data).append("type", type)
 				.append("relateId", new ObjectId(eventId)));
 	}
 	@Override

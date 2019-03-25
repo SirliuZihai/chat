@@ -41,6 +41,7 @@
 	    </property> -->
 	    <property name="filterChainDefinitions">
 	        <value>
+	        	/=anon
 	        	/shiro/** = anon 
 	            /admin/** = authc, roles[admin]
 	            /docs/** = authc, perms[document:read]

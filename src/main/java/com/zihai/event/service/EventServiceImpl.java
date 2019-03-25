@@ -48,17 +48,19 @@ public class EventServiceImpl implements EventService {
 		MongoUtil.getCollection("message").insertOne(message.append("_id", new ObjectId()));
 		//insert event_queue
 		List<Document> list = new ArrayList<Document>();
-		//send to yourself
-		list.add(new Document("_id", new ObjectId()).append("username",message.getString("sender")).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 		if(CollectionUtils.isEmpty(message.getList("receiver", String.class))){
 			//send all
-			List<String> relationship = MongoUtil.getCollection("event").find(new Document("_id",message.getObjectId("relateId"))).first().getList("relationship", String.class);
+			Document e = MongoUtil.getCollection("event").find(new Document("_id",message.getObjectId("relateId"))).first();
+			List<String> relationship = e.getList("relationship", String.class);
+			relationship.add(e.getString("username"));
 			if(CollectionUtils.isNotEmpty(relationship)){
 				for(String other : relationship){
 					list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 				}
 			}
 		}else{
+			//send to yourself
+			list.add(new Document("_id", new ObjectId()).append("username",message.getString("sender")).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 			//send to receiver in events
 			for(String other : message.getList("receiver", String.class)){
 				list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId",message.getObjectId("_id")).append("type", 1).append("state", 0));
@@ -89,7 +91,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public List queryHistroy(Map filter1,String username) {
 		 Document filter = new Document();
-		 Set<Document> and_set = new HashSet<Document>();		 
+		 Set<Document> and_set = new HashSet<Document>();
 		 if(!StringUtils.isEmpty((String)filter1.get("title"))){
 			 and_set.add(new Document("title", new Document("$regex",(String)filter1.get("title")).append("$options", "si")));
 		 }
@@ -136,8 +138,7 @@ public class EventServiceImpl implements EventService {
 		       }
 		};
 		MongoUtil.getCollection("event_queue").aggregate(criteria).forEach(block);				
-		log.info("queryNoSendEvent filter2 ==="+ JSON.toJSONString(criteria)); 
-		System.out.println(JSON.toJSONString(l));
+		log.info("queryNoSendEvent result ==="+ JSON.toJSONString(l)); 
 		return l;
 	}
 	@Override
@@ -146,7 +147,7 @@ public class EventServiceImpl implements EventService {
 		Document filter = new Document("username", username).append("state", 0).append("type", 1);
 		List<Document> criteria = new ArrayList<Document>();
 		criteria.add(new Document().append("$lookup", new Document().append("from", "message")
-				.append("localField", "eventId").append("foreignField", "_id").append("as", "e")));
+				.append("localField", "eventId").append("foreignField", "_id").append("as", "m")));
 		criteria.add(new Document().append("$match", filter));
 		criteria.add(new Document().append("$unwind",new Document().append("path", "$m").append("preserveNullAndEmptyArrays", true)));
 		criteria.add(new Document().append("$sort",new Document().append("m._id", 1)));
@@ -234,14 +235,7 @@ public class EventServiceImpl implements EventService {
 		}
 	}
 	public static void main(String[] args) {
-		//new EventServiceImpl().queryNoSendEvent("yanzi",1);
-		Document filter1 = new Document();
-		filter1.put("title", "test22");
-		Document id = (Document) MongoUtil.Query(filter1, new Document("_id",1), Document.class, "event").get(0);
-		String hex_s ;
-		System.out.println(hex_s = JSON.toJSONString(id.get("_id")));
-		System.out.println(id.getObjectId("_id").toHexString());
-		System.out.println(JSON.parseObject(hex_s, ObjectId.class).toHexString());
+		new EventServiceImpl().queryNoSendMessage("yanzi");	
 	}
 
 }

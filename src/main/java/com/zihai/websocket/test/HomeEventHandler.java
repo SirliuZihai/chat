@@ -40,7 +40,7 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 			 String result = new ObjectMapper().writeValueAsString(list);
 			 session.sendMessage(new TextMessage("0000"+result));
 			 List<Document> list2 = eventService.queryNoSendMessage(username);		
-			 String result2 = new ObjectMapper().writeValueAsString(list);
+			 String result2 = new ObjectMapper().writeValueAsString(list2);
 			 session.sendMessage(new TextMessage("0001"+result2));
 			 
 			 Set<ObjectId> inArray = new HashSet<ObjectId>();
