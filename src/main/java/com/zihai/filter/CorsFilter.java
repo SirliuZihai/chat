@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Component
 @WebFilter(urlPatterns = "/*", filterName = "CorsFilter")
 public class CorsFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CorsFilter.class);
