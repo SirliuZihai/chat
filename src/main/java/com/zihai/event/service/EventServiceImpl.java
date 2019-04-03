@@ -29,8 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
-import com.zihai.websocket.test.EventChatHandler;
-import com.zihai.websocket.test.HomeEventHandler;
+import com.zihai.websocket.EventChatHandler;
+import com.zihai.websocket.HomeEventHandler;
 
 @Service("eventService")
 public class EventServiceImpl implements EventService {

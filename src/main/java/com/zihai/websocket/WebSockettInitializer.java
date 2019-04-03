@@ -1,3 +1,4 @@
+package com.zihai.websocket;
 /*package com.zihai.websocket.test;
 
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;

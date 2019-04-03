@@ -1,4 +1,4 @@
-package com.zihai.websocket.test;
+package com.zihai.websocket;
 
 
 import java.util.HashMap;
@@ -17,6 +17,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import com.zihai.event.service.EventService;
+import com.zihai.util.EncrypUtil;
 
 public class EventChatHandler extends AbstractWebSocketHandler {
 	@Autowired
@@ -26,9 +27,9 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 
 	protected void handleTextMessage(WebSocketSession session,TextMessage message)throws Exception{
 		 String eventId = getParams(session).get("eventId");
-		 String username = session.getPrincipal().toString();
+		 String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		if("heartbeat[myapp]".equals(message.getPayload())){
-			log.debug("heartbeat from "+session.getPrincipal().toString());
+			log.debug("heartbeat from "+username);
 			return;
 		}
 		String type = null ,data=null;
@@ -45,15 +46,17 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 	@Override
 	public  void afterConnectionEstablished(WebSocketSession session){
 		String eventId = getParams(session).get("eventId");
-		clients.put(eventId +"|"+ session.getPrincipal().toString(), session);
-		log.debug(eventId +"|"+ session.getPrincipal()+" is esablished");
+		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
+		clients.put(eventId +"|"+ username , session);
+		log.debug(eventId +"|"+ username+" is esablished");
 	}
 	
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
 		String eventId = getParams(session).get("eventId");
-		clients.remove(eventId +"|"+ session.getPrincipal().toString());
-		log.debug(eventId +"|"+ session.getPrincipal()+" is closed");
+		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
+		clients.remove(eventId +"|"+ username);
+		log.debug(eventId +"|"+ username+" is closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
@@ -63,7 +66,7 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 		Map<String,String> m = new HashMap<String,String>();
 		String query = session.getUri().getQuery();
 		if(StringUtils.isNotEmpty(query)){
-			for(String s : query.split("%")){
+			for(String s : query.split("&")){
 				String[] s_ = s.split("=");
 				if(s_.length>1)
 					m.put(s_[0], s_[1]);		

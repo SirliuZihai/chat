@@ -1,12 +1,21 @@
 package com.zihai.event.controller;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +23,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSON;
 import com.zihai.event.service.EventService;
@@ -65,5 +76,33 @@ public class EventController {
 			e.printStackTrace();
 			return Result.failure(e.getMessage());
 		}
+	}
+	@RequestMapping(value = "/uploadtempfile.do" ,method = RequestMethod.POST)
+	@ResponseBody
+	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {
+		 String savepath = "/tempFile/"+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
+		 String path = req.getServletContext().getResource("/").getPath()+savepath;
+		 InputStream in = null;
+		 FileOutputStream out = null;
+		 try { 
+			 in = tempFile.getInputStream();
+			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
+			 if(!f.exists())f.mkdirs();
+			 out = new FileOutputStream(path);
+			IOUtils.copy(in, out);
+			 return Result.success(savepath);
+		} catch (IOException e) {
+			return Result.failure(e.getMessage());
+		}finally{
+			try {
+				if(in !=null)in.close();
+			} catch (IOException e) {
+			}
+			try {
+				if(out !=null)out.close();
+			} catch (IOException e) {
+			}	
+		}
+		
 	}
 }

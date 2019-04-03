@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
 		if(it.hasNext()){
 			return (Map)it.next();
 		}else{
-			return null;
+			return new HashMap();
 		}				
 	}
 	@Override

@@ -1,4 +1,4 @@
-package com.zihai.websocket.test;
+package com.zihai.websocket;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,9 +1,8 @@
 package com.zihai.filter;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -12,13 +11,13 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-@WebFilter(urlPatterns = "*.gz", filterName = "GzipFilter")
+@WebFilter(urlPatterns = {"*.gz","*.js"}, filterName = "GzipFilter")
 public class GzipFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GzipFilter.class);
 
@@ -56,8 +55,16 @@ public class GzipFilter implements Filter {
      */
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
             ServletException {
+    	 String uri = ((HttpServletRequest)request).getRequestURI();
+    	 LOGGER.info(uri+" get from server");
     	 HttpServletResponse res = (HttpServletResponse) response;
-         res.addHeader("Content-Encoding", "gzip");
+    	 if(uri.endsWith("js")){
+    		 LOGGER.info(uri+" has returned");
+    	 }else{
+             res.addHeader("Content-Encoding", "gzip");
+    	 }
+         res.addDateHeader("Expires", new Date().getTime()+20000);
+         res.addHeader("Pragma", "no-cache");//Pragma:设置页面是否缓存，为Pragma则缓存，no-cache则不缓存
          chain.doFilter(request, response);
     }
 

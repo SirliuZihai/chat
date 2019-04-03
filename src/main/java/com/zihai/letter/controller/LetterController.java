@@ -34,7 +34,7 @@ public class LetterController {
 	public Result sendLetter(@RequestBody Map<String,Object> data){
 		Document letterBox = new Document(data);
 		try {
-			letterService.sendLetter(letterBox.getString("master"), letterBox.get("letter",Document.class));
+			letterService.sendLetter(letterBox.getString("username"), letterBox.get("letter",Document.class));
 			return Result.success("投递成功");
 		} catch (Exception e) {
 			e.printStackTrace();

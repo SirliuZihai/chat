@@ -1,12 +1,15 @@
-package com.zihai.websocket.test;
+package com.zihai.websocket;
 
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -20,6 +23,7 @@ import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zihai.event.service.EventService;
+import com.zihai.util.EncrypUtil;
 
 public class HomeEventHandler extends AbstractWebSocketHandler {
 	@Autowired
@@ -28,9 +32,9 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 	public Map<String, WebSocketSession> clients = new ConcurrentHashMap<>();
 
 	protected void handleTextMessage(WebSocketSession session,TextMessage message)throws Exception{
-		 String username = session.getPrincipal().toString();
+		 String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		if("heartbeat[myapp]".equals(message.getPayload())){
-			log.debug("heartbeat from "+session.getPrincipal().toString());
+			log.debug("heartbeat from "+username);
 			return;
 		}
 		if("receive Home date".equals(message.getPayload())){
@@ -55,18 +59,34 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 		 }
 	}
 	@Override
-	public  void afterConnectionEstablished(WebSocketSession session){
-		clients.put(session.getPrincipal().toString(), (WebSocketSession) session);
-		log.debug(session.getPrincipal()+"esablished");
+	public  void afterConnectionEstablished(WebSocketSession session) throws IOException{
+		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
+		if(clients.containsKey(username))
+			clients.get(username).close();
+		clients.put(username, (WebSocketSession) session);
+		log.debug(username+"esablished");
 	}
 	
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
-		clients.remove(session.getPrincipal().toString());
-		log.debug(session.getPrincipal()+"closed");
+		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
+		clients.remove(username);
+		log.debug(username+"closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 		session.close();
+	}
+	public static Map<String,String> getParams(WebSocketSession session){
+		Map<String,String> m = new HashMap<String,String>();
+		String query = session.getUri().getQuery();
+		if(StringUtils.isNotEmpty(query)){
+			for(String s : query.split("&")){
+				String[] s_ = s.split("=");
+				if(s_.length>1)
+					m.put(s_[0], s_[1]);		
+			}
+		}
+		return m;
 	}
 }

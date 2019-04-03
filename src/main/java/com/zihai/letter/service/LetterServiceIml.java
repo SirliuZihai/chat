@@ -1,5 +1,6 @@
 package com.zihai.letter.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,10 @@ public class LetterServiceIml implements LetterService {
 		String uname =(String)SecurityUtils.getSubject().getPrincipal();
 		Document filter = new Document("username",uname).append("letter.state", 0);
 		Document d = MongoUtil.getCollection("letter").find(filter).first();
-		return d.getList("letter", Map.class);
+		if(d!=null){
+			return d.getList("letter", Map.class);
+		}
+		return new ArrayList();
 	}
 	@Override
 	public List getOtherLetters(String othername) {

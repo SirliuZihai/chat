@@ -1,4 +1,4 @@
-package com.zihai.websocket.test;
+package com.zihai.websocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +11,10 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  * 使用springboot的唯一区别是要@Component声明下，而使用独立容器是由容器自己管理websocket的，但在springboot中连容器都是spring管理的。
  * */
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 @EnableWebSocket
 @Configuration
-public class WebSocketConfig implements WebSocketConfigurer 
+public class WebSocketConfig extends HttpSessionHandshakeInterceptor implements WebSocketConfigurer 
 {
 	Logger log =  LoggerFactory.getLogger(getClass());
 	
@@ -29,7 +30,7 @@ public class WebSocketConfig implements WebSocketConfigurer
 		log.info(getClass().getSimpleName()+" registring");
 		registry.addHandler(marchHandler(), "/websocket/homeview.do")
 		.addHandler(marchHandler2(), "/websocket/chatview.do")
-		.setAllowedOrigins("*");
+		.setAllowedOrigins("*").addInterceptors(new HttpSessionHandshakeInterceptor());
 	}
 	
 	@Bean
