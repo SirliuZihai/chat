@@ -2,7 +2,11 @@ package com.zihai.letter.controller;
 
 import java.util.Map;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +19,8 @@ import com.zihai.util.Result;
 @Controller
 @RequestMapping("letter")
 public class LetterController {
+	private final Logger log = LoggerFactory.getLogger(LetterController.class);
+
 	@Autowired
 	private LetterService letterService;
 	
@@ -24,7 +30,7 @@ public class LetterController {
 		try {
 			return Result.success(null, letterService.getLetters());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
 		}	
 	}
@@ -38,6 +44,7 @@ public class LetterController {
 			return Result.success("投递成功");
 		} catch (Exception e) {
 			e.printStackTrace();
+			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
 		}
 	}
@@ -49,6 +56,33 @@ public class LetterController {
 			return Result.success(null, letterService.getOtherLetters(other));
 		} catch (Exception e) {
 			e.printStackTrace();
+			log.error(e.getMessage());
+			return Result.failure(e.getMessage());		
+		}	
+	}
+	@RequestMapping("getNearrBox.do")
+	@ResponseBody
+	public Result getNearrBox(@RequestBody Map<String,Object> data){
+		Document position = new Document(data);
+		try {
+			return Result.success(null, letterService.getLetterBox(position));
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+			return Result.failure(e.getMessage());		
+		}	
+	}
+	@RequestMapping("delete.do")
+	@ResponseBody
+	public Result delete(@RequestBody Map<String,String> data){
+		Subject currentUser = SecurityUtils.getSubject();
+		data.put("username", currentUser.getPrincipals().toString());
+		try {
+			letterService.delete(data);
+			return Result.success("删除成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
 		}	
 	}
