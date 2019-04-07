@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@WebFilter(urlPatterns = {"*.gz","*.js"}, filterName = "GzipFilter")
+@WebFilter(urlPatterns = {"*.gz","*.js","*.css"}, filterName = "GzipFilter")
 public class GzipFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GzipFilter.class);
 
@@ -58,12 +58,10 @@ public class GzipFilter implements Filter {
     	 String uri = ((HttpServletRequest)request).getRequestURI();
     	 LOGGER.info(uri+" get from server");
     	 HttpServletResponse res = (HttpServletResponse) response;
-    	 if(uri.endsWith("js")){
-    		 LOGGER.info(uri+" has returned");
-    	 }else{
-             res.addHeader("Content-Encoding", "gzip");
+    	 if(uri.endsWith("gz")){
+    		 res.addHeader("Content-Encoding", "gzip");
     	 }
-         res.addDateHeader("Expires", new Date().getTime()+20000);
+         //res.addDateHeader("Expires", new Date().getTime()+20000);
          res.addHeader("Pragma", "no-cache");//Pragma:设置页面是否缓存，为Pragma则缓存，no-cache则不缓存
          chain.doFilter(request, response);
     }
