@@ -1,7 +1,10 @@
 package com.zihai.shiro.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,10 +16,10 @@ import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -69,7 +72,7 @@ public class ShiroController {
 				return  Result.failure("token失效，请重新登录！");
 		}
 		try{
-			token.setRememberMe(true);
+			//token.setRememberMe(true);  org.apache.shiro.crypto.CryptoException: Unable to execute 'doFinal' with cipher instance
 			token.setHost(req.getRemoteHost());
 			SecurityUtils.getSubject().login(token);
 			Map data = userService.findInfoByUsername(token.getUsername());
@@ -102,10 +105,18 @@ public class ShiroController {
 	
 	@RequestMapping(value = "/newUser.do")
 	@ResponseBody
-	public String newUser(@RequestBody Map user) {
+	public String newUser(@RequestBody Map user,HttpServletRequest req) {
 		try{
-			if(userService.createUser(user))
+			if(userService.createUser(user)){
+				//添加默认头像，
+				 String path = req.getServletContext().getResource("/").getPath()+"image/head/";
+				 File f = new File(path);
+				 if(!f.exists())f.mkdirs();
+				 InputStream in = new FileInputStream(path+"none.jpg");
+				 FileOutputStream out = new FileOutputStream(path+(String)user.get("username")+".jpg");
+				IOUtils.copy(in, out);
 				return "OK";
+			}
 			throw new Exception();
 		}catch(Exception e){
 			return "添加用户失败";

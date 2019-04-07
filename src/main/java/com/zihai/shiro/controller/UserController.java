@@ -119,26 +119,17 @@ public class UserController {
 	public Result uploadHeadImg(@RequestParam(value="headImageFile",required=false)MultipartFile headImageFile,HttpServletRequest req) throws MalformedURLException {
 		 Subject currentUser = SecurityUtils.getSubject();
 		 String path = req.getServletContext().getResource("/").getPath()+"image/head/"+(String)currentUser.getPrincipal()+".jpg";
-		 InputStream in = null;
-		 FileOutputStream out = null;
 		 try { 
-			 in = headImageFile.getInputStream();
+			 InputStream in = headImageFile.getInputStream();
 			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
 			 if(!f.exists())f.mkdirs();
-			 out = new FileOutputStream(path);
+			 FileOutputStream out = new FileOutputStream(path);
 			IOUtils.copy(in, out);
 			 return Result.success("上传成功");
 		} catch (IOException e) {
 			return Result.failure(e.getMessage());
 		}finally{
-			try {
-				if(in !=null)in.close();
-			} catch (IOException e) {
-			}
-			try {
-				if(out !=null)out.close();
-			} catch (IOException e) {
-			}	
+			//1.7自动关闭流	
 		}
 		
 	}

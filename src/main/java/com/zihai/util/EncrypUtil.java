@@ -102,7 +102,7 @@ public class EncrypUtil {
 		if(Calendar.getInstance().after(c)){
 			throw new BusinessException("token 失效");
 		}
-		UsernamePasswordToken token1 = new UsernamePasswordToken(token_date[0],token_date[1]);		
+		UsernamePasswordToken token1 = new UsernamePasswordToken(token_date[0],token_date[1],token_date[2]);		
 		return token1;
 	}
 	public void jdkDES(String src){
