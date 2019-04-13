@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.zihai.shiro.service.UserService;
+import com.zihai.util.BusinessException;
 import com.zihai.util.EncrypUtil;
 import com.zihai.util.Result;
 //@CrossOrigin
@@ -87,6 +88,8 @@ public class ShiroController {
 			return Result.failure("该用户已禁用，请与管理员联系");
 		}catch(AuthenticationException e){
 			return Result.failure("用户名或密码不正确");
+		}catch(BusinessException e){
+			return Result.failure(e.getMessage());
 		}catch(Exception e){
 			return Result.failure("登录失败");
 		}

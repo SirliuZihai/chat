@@ -1,5 +1,5 @@
 server:
-  port: 80
+  port: 8081
   servlet:
     context-path: /myapp
     session:
@@ -9,11 +9,11 @@ server:
       timeout: 999999999  
   tomcat:
     accept-count: 5
-    max-threads: 5  
+    max-threads: 1000  
 spring:
   servlet:
     multipart:
-      max-file-size: 2MB
+      max-file-size: 3MB
       max-request-size: 10MB
   mvc:
     view:
@@ -24,10 +24,23 @@ spring:
   devtools:
     restart:
       enabled: false
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure.include: "*"
+      base-path: /Actuator
+  server:
+      port: 8085
+      address: 127.0.0.1
 logging:
+  file: /home/yizhi/logging/myapp.log
   level:
-    root: info
     org.springframework.boot.autoconfigure: ERROR 
     org.mongodb.driver: ERROR
-    com.zihai.websocket.test.HomeEventHandler: DEBUG
-    com.zihai.websocket.test.EventChatHandler: DEBUG
+    com.zihai.websocket.HomeEventHandler: DEBUG
+    com.zihai.websocket.EventChatHandler: DEBUG
+    org.springframework.boot.web.servlet.* : INFO
+    root: INFO

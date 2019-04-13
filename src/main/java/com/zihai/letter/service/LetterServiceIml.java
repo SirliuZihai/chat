@@ -1,5 +1,6 @@
 package com.zihai.letter.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 @Service
 public class LetterServiceIml implements LetterService {
+	
 
 	@Override
 	public List getLetters() {
@@ -45,20 +47,24 @@ public class LetterServiceIml implements LetterService {
 		List<Document> l = new ArrayList<Document>();
 		Block<Document> block = new Block<Document>() {
 			@Override
-		       public void apply(final Document document) {
-				Document e =(Document) document.get("letter");
-				e.put("_id", e.getObjectId("_id").toHexString());
-				l.add(e);
+		       public void apply(final Document document) { //只查出一条
+				List<Document> e = (List<Document>) document.get("letter");
+				if(e!=null)
+					for(Document d : e){
+						d.put("_id", d.getObjectId("_id").toHexString());
+					}
+					l.addAll(e);
 		       }
 		};
-		MongoUtil.getCollection("letterBox").find(filter).forEach(block);
+		MongoUtil.getCollection("letterBox").find(filter).projection(new Document("letter",1)).forEach(block);
 		return l;
 	}
 	@Override
 	public List getLetterBox(Document position) {
 		Double x = position.getDouble("longitude");
 		Double y = position.getDouble("latitude");
-		Document doc = Document.parse("{letterPlace:{$geoWithin:{$centerSphere:[["+x+","+y+"],500/6378137]}}}");
+		BigDecimal range = new BigDecimal(500).divide(new BigDecimal(6378137),10,BigDecimal.ROUND_HALF_DOWN);//  500/6378137
+		Document doc = Document.parse("{'letterPlace':{$geoWithin:{$centerSphere:[["+x+","+y+"],"+range+"]}}}");
 		List l = MongoUtil.Query(doc, new Document("username",1).append("letterPlace",1), Document.class, "letterBox");
 		return l;
 	}
@@ -82,5 +88,24 @@ public class LetterServiceIml implements LetterService {
 		if(result.getModifiedCount()==0)
 			throw new BusinessException("删除失败");
 	}
-
+	@Override
+	public void setBoxPlace(String username, Document position) {
+		List<Double> array = new ArrayList<Double>();
+		array.add(position.getDouble("longitude"));
+		array.add(position.getDouble("latitude"));
+		MongoUtil.getCollection("letterBox").updateOne(new Document("username",username),
+				new Document("$set",
+						new Document("letterPlace.coordinates", array)));
+		
+	}
+	@Override
+	public void setUpBox(String username, Document position) {
+		List<Double> array = new ArrayList<Double>();
+		array.add(position.getDouble("longitude"));
+		array.add(position.getDouble("latitude"));
+		MongoUtil.getCollection("letterBox").insertOne(new Document("username",username).append("letterPlace", 
+				new Document("type","Point").append("coordinates", array)));
+						
+		
+	}
 }

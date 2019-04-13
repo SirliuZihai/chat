@@ -38,9 +38,11 @@ public class LetterController {
 	@RequestMapping("sendLetter.do")
 	@ResponseBody
 	public Result sendLetter(@RequestBody Map<String,Object> data){
-		Document letterBox = new Document(data);
+		Document letter = new Document(data);
+		String username = SecurityUtils.getSubject().getPrincipal().toString();
+		letter.put("sender", username);
 		try {
-			letterService.sendLetter(letterBox.getString("username"), letterBox.get("letter",Document.class));
+			letterService.sendLetter(letter.getString("receiver"), letter);
 			return Result.success("投递成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -51,9 +53,10 @@ public class LetterController {
 	
 	@RequestMapping("getOtherLetter.do")
 	@ResponseBody
-	public Result getOtherLetter(String other){
+	public Result getOtherLetter(@RequestBody Map<String,Object> data){
+		String othername = (String) data.get("othername");
 		try {
-			return Result.success(null, letterService.getOtherLetters(other));
+			return Result.success(null, letterService.getOtherLetters(othername));
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
@@ -70,7 +73,21 @@ public class LetterController {
 			e.printStackTrace();
 			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
-		}	
+		}
+	}
+	@RequestMapping("setBoxPlace.do")
+	@ResponseBody
+	public Result setBoxPlace(@RequestBody Map<String,Object> data){
+		Document position = new Document(data);
+		String username = SecurityUtils.getSubject().getPrincipal().toString();
+		try {
+			letterService.setUpBox(username,position);
+			return Result.success("设置成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+			return Result.failure(e.getMessage());		
+		}
 	}
 	@RequestMapping("delete.do")
 	@ResponseBody

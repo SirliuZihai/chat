@@ -1,7 +1,6 @@
 package com.zihai.filter;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.Filter;

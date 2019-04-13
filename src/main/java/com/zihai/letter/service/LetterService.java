@@ -26,5 +26,13 @@ public interface LetterService {
 	 * 删除信件
 	 * */
 	public void delete(Map<String, String> data);
+	/**
+	 * 设置信箱位置
+	 * */
+	public void setBoxPlace(String username, Document position);
+	/**
+	 * 新建信箱位置
+	 * */
+	void setUpBox(String username, Document position);
 
 }

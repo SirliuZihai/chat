@@ -100,7 +100,7 @@ public class EncrypUtil {
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date(token_date[3]));
 		if(Calendar.getInstance().after(c)){
-			throw new BusinessException("token 失效");
+			throw new BusinessException("token 失效，请重新登录");
 		}
 		UsernamePasswordToken token1 = new UsernamePasswordToken(token_date[0],token_date[1],token_date[2]);		
 		return token1;

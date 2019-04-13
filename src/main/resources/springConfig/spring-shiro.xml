@@ -28,7 +28,7 @@
 	<bean id="myRealm" class="com.zihai.shiro.service.UserRealm" />
 	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
 	    <property name="securityManager" ref="securityManager"/>
-	    <property name="loginUrl" value="/websocket/**"/>
+	    <property name="loginUrl" value="/login.do"/>
 	    <property name="unauthorizedUrl" value="shiro/unauthorized.do"/>
 	    <property name="successUrl" value="/"/>
 	    <!-- The 'filters' property is not necessary since any declared javax.servlet.Filter bean  -->
@@ -41,9 +41,10 @@
 	    </property> -->
 	    <property name="filterChainDefinitions">
 	        <value>
-	        	/=anon
+	        	/tempFile/** = anon
 	        	/static/** = anon
 	        	/shiro/** = anon
+	        	/websocket/** = anon
 	            /admin/** = authc, roles[admin]
 	            /docs/** = authc, perms[document:read]
 	            <!-- /** = anon -->
