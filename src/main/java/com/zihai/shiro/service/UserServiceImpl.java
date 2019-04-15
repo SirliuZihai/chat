@@ -68,16 +68,16 @@ public class UserServiceImpl implements UserService {
 		if(it.hasNext()){
 			return (Map)it.next();
 		}else{
-			return new HashMap();
+			return null;
 		}				
 	}
 	@Override
 	public Map findInfoByUsername2(String username) {
-		Iterator<Document> it = MongoUtil.getCollection("userInfo").find(Document.parse("{'username':'"+username+"'}")).projection(Document.parse("{'alias':1,'doing':1,'place':1}")).iterator();
-		if(it.hasNext()){
-			return (Map)it.next();
+		Document it = MongoUtil.getCollection("userInfo").find(new Document("username",username)).projection(Document.parse("{'alias':1,'doing':1,'place':1}")).first();
+		if(it!=null){
+			return it;
 		}else{
-			return null;
+			return new HashMap();
 		}
 	}
 	@Override

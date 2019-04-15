@@ -188,7 +188,7 @@ public class EventServiceImpl implements EventService {
 		}
 		//add notify others and self into event_queue
 		List<Document> list = new ArrayList<Document>();
-		if(!CollectionUtils.isEmpty((Collection<?>) event.get("relationship")))
+		if(!CollectionUtils.isEmpty(event.getList("relationship", String.class)))
 		for(String other : event.getList("relationship", String.class)){
 			list.add(new Document().append("_id", new ObjectId()).append("username", other).append("eventId", event.get("_id")).append("type", 0).append("state", 0));
 		}

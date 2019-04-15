@@ -76,7 +76,7 @@ public class ShiroController {
 			//token.setRememberMe(true);  org.apache.shiro.crypto.CryptoException: Unable to execute 'doFinal' with cipher instance
 			token.setHost(req.getRemoteHost());
 			SecurityUtils.getSubject().login(token);
-			Map data = userService.findInfoByUsername(token.getUsername());
+			Map data = userService.findInfoByUsername2(token.getUsername());
 			Calendar expire = Calendar.getInstance();
 			expire.add(Calendar.DATE, 7);
 			data.put("token", EncrypUtil.encode(token.getUsername()+"&"+new String(token.getPassword())+"&"+token.getHost()+"&"+expire.getTime()));
@@ -91,6 +91,7 @@ public class ShiroController {
 		}catch(BusinessException e){
 			return Result.failure(e.getMessage());
 		}catch(Exception e){
+			e.printStackTrace();
 			return Result.failure("登录失败");
 		}
 		
