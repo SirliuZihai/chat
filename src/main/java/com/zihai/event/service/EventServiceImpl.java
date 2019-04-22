@@ -112,7 +112,7 @@ public class EventServiceImpl implements EventService {
 			 filter_time.add(new Document("endtime",new Document("$gte",temp)));
 		 }	 
 		 if(filter_time.size()>0)
-			 and_set.add(new Document("$or", filter_time));
+			 and_set.add(new Document("$and", filter_time));
 		 Document filter2 = new Document("$and",and_set);
 		return MongoUtil.Query(filter2, null, Document.class, "event");
 	}

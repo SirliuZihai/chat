@@ -49,11 +49,12 @@ public class LetterServiceIml implements LetterService {
 			@Override
 		       public void apply(final Document document) { //只查出一条
 				List<Document> e = (List<Document>) document.get("letter");
-				if(e!=null)
+				if(e!=null){
 					for(Document d : e){
 						d.put("_id", d.getObjectId("_id").toHexString());
 					}
 					l.addAll(e);
+				}
 		       }
 		};
 		MongoUtil.getCollection("letterBox").find(filter).projection(new Document("letter",1)).forEach(block);
