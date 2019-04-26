@@ -2,8 +2,6 @@ package com.zihai.event.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +22,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.alibaba.fastjson.JSON;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
 import com.zihai.util.BusinessException;
@@ -87,7 +84,11 @@ public class EventServiceImpl implements EventService {
 		}
 
 	}
-
+	@Override
+	public Document getEventById(String eventId) {
+		 Document event = new Document("_id",new ObjectId(eventId));
+		 return (Document) MongoUtil.Query(event, null, Document.class, "event").get(0);
+	}
 	@Override
 	public List queryHistroy(Map filter1,String username) {
 		 Document filter = new Document();
@@ -237,5 +238,7 @@ public class EventServiceImpl implements EventService {
 	public static void main(String[] args) {
 		new EventServiceImpl().queryNoSendMessage("yanzi");	
 	}
+
+	
 
 }

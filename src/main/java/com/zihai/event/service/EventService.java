@@ -41,6 +41,11 @@ public interface EventService {
 
 	public void save(Document event) throws IOException;
 
+	/**
+	 * 查询事件
+	 * */
+	public Document getEventById(String eventId);
+
 
 
 }

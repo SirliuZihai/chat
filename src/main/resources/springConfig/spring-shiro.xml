@@ -43,6 +43,7 @@
 	        <value>
 	        	/tempFile/** = anon
 	        	/static/** = anon
+	        	/www/** = anon
 	        	/shiro/** = anon
 	        	/websocket/** = anon
 	            /admin/** = authc, roles[admin]

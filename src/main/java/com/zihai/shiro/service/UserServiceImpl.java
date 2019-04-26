@@ -18,6 +18,7 @@ public class UserServiceImpl implements UserService {
 	public Boolean createUser(Map user) {
 		try {
 			MongoUtil.getCollection("user").insertOne(Document.parse(JSON.toJSONString(user)));
+			MongoUtil.getCollection("userInfo").insertOne(new Document("username",(String)user.get("username")).append("alia", ""));
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();

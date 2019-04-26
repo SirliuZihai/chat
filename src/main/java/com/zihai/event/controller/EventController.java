@@ -54,6 +54,18 @@ public class EventController {
 			return Result.failure("错误："+e.getMessage());
 		}
 	}
+	@RequestMapping(value="/getEvent.do",method = RequestMethod.GET)
+	@ResponseBody
+	public Result getEvent(String eventId){
+		 try {
+			Document d = eventService.getEventById(eventId);
+			return Result.success(null,d);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Result.failure("错误："+e.getMessage());
+		}
+	}
+	
 	@RequestMapping(value="/queryHistroy.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result queryEvent(@RequestBody Map<String,Object> filter){

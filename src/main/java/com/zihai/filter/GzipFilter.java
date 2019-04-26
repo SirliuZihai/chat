@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@WebFilter(urlPatterns = {"*.gz","*.js","*.css"}, filterName = "GzipFilter")
+@WebFilter(urlPatterns = {"*.gz","*.js","*.css","*.json"}, filterName = "GzipFilter")
 public class GzipFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GzipFilter.class);
 
