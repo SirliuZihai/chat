@@ -64,14 +64,14 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 		if(clients.containsKey(username))
 			clients.get(username).close();
 		clients.put(username, (WebSocketSession) session);
-		log.debug(username+"esablished");
+		log.info(username+"esablished");
 	}
 	
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
 		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		clients.remove(username);
-		log.debug(username+"closed");
+		log.info(username+"closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
