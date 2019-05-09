@@ -29,7 +29,7 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 		 String eventId = getParams(session).get("eventId");
 		 String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		if("heartbeat[myapp]".equals(message.getPayload())){
-			log.debug("heartbeat from "+username);
+			//log.debug("heartbeat from "+username);
 			return;
 		}
 		String type = null ,data=null;
@@ -48,7 +48,7 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 		String eventId = getParams(session).get("eventId");
 		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		clients.put(eventId +"|"+ username , session);
-		log.info(eventId +"|"+ username+" is esablished");
+		log.debug(eventId +"|"+ username+" is esablished");
 	}
 	
 	@Override
@@ -56,7 +56,7 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 		String eventId = getParams(session).get("eventId");
 		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		clients.remove(eventId +"|"+ username);
-		log.info(eventId +"|"+ username+" is closed");
+		log.debug(eventId +"|"+ username+" is closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {

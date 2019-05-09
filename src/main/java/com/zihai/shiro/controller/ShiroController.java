@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +20,8 @@ import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -25,9 +30,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.zihai.event.service.EventService;
 import com.zihai.shiro.service.UserService;
 import com.zihai.util.BusinessException;
+import com.zihai.util.DateUtil;
 import com.zihai.util.EncrypUtil;
+import com.zihai.util.MongoUtil;
 import com.zihai.util.Result;
 //@CrossOrigin
 @Controller
@@ -36,6 +44,8 @@ public class ShiroController {
 	private final Logger log = Logger.getLogger(ShiroController.class);
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private EventService eventService;
 	
 	@RequestMapping(value = "/manager.do")
 	public String manager() {
@@ -119,11 +129,24 @@ public class ShiroController {
 				 InputStream in = new FileInputStream(path+"none.jpg");
 				 FileOutputStream out = new FileOutputStream(path+(String)user.get("username")+".jpg");
 				IOUtils.copy(in, out);
+				//新人问候
+				String uname = (String)user.get("username");
+				if(!uname.equals("nicool")){
+					String date = DateUtil.DateToString(new Date(), "yyyyMMdd");
+					List<String> relationship = new ArrayList<String>();
+					relationship.add((String)user.get("username"));
+					eventService.save(new Document("username","nicool").append("title", "问候")
+							.append("starttime", date).append("endtime", date).append("relationship",relationship).append("public", false));
+					ObjectId event_key = MongoUtil.getCollection("event_queue").find(new Document("username",uname)).first().getObjectId("eventId");
+					eventService.insertMessage(new Document("sender","nicool").append("data", "您好，我叫nicool，很高兴能为您服务。").append("type", "text")
+							.append("relateId", event_key).append("receiver", relationship));
+				}
 				return "OK";
 			}
-			throw new Exception();
+			return "注册失败";
 		}catch(Exception e){
-			return "添加用户失败";
+			e.printStackTrace();
+			return e.getMessage();
 		}
 	}
 	

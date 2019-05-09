@@ -18,6 +18,8 @@ import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,7 +38,7 @@ import com.zihai.util.Result;
 @Controller
 @RequestMapping("/event")
 public class EventController {
-
+	private Logger log = LoggerFactory.getLogger(getClass());
 	@Autowired
 	private EventService eventService;
 	
@@ -94,6 +96,7 @@ public class EventController {
 	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {
 		 String savepath = "/tempFile/"+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
 		 String path = req.getServletContext().getResource("/").getPath()+savepath;
+		 log.info("uploadtempfile.do path===" +path);
 		 InputStream in = null;
 		 FileOutputStream out = null;
 		 try { 

@@ -34,7 +34,8 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 	protected void handleTextMessage(WebSocketSession session,TextMessage message)throws Exception{
 		 String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		if("heartbeat[myapp]".equals(message.getPayload())){
-			log.debug("heartbeat from "+username);
+			//log.debug("heartbeat from "+username);
+			 session.sendMessage(new TextMessage("0003"));
 			return;
 		}
 		if("receive Home date".equals(message.getPayload())){
@@ -64,14 +65,14 @@ public class HomeEventHandler extends AbstractWebSocketHandler {
 		if(clients.containsKey(username))
 			clients.get(username).close();
 		clients.put(username, (WebSocketSession) session);
-		log.info(username+"esablished");
+		log.debug(username+"esablished");
 	}
 	
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
 		String username =  EncrypUtil.getUserName(getParams(session).get("token"));
 		clients.remove(username);
-		log.info(username+"closed");
+		log.debug(username+"closed");
 	}
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {

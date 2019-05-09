@@ -61,7 +61,7 @@ public class GzipFilter implements Filter {
     		 res.addHeader("Content-Encoding", "gzip");
     	 }
          //res.addDateHeader("Expires", new Date().getTime()+20000);
-         res.addHeader("Pragma", "no-cache");//Pragma:设置页面是否缓存，为Pragma则缓存，no-cache则不缓存
+         //res.addHeader("Pragma", "no-cache");//Pragma:设置页面是否缓存，为Pragma则缓存，no-cache则不缓存
          chain.doFilter(request, response);
     }
 

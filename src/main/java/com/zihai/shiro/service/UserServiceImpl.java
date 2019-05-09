@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.mongodb.MongoWriteException;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 
@@ -18,12 +19,16 @@ public class UserServiceImpl implements UserService {
 	public Boolean createUser(Map user) {
 		try {
 			MongoUtil.getCollection("user").insertOne(Document.parse(JSON.toJSONString(user)));
-			MongoUtil.getCollection("userInfo").insertOne(new Document("username",(String)user.get("username")).append("alia", ""));
+			MongoUtil.getCollection("userInfo").insertOne(new Document("username",(String)user.get("username")).append("alia", "").append("UIM", (String)user.get("UIM")));
 			return true;
-		} catch (Exception e) {
+		} catch(MongoWriteException e){
+			if(e.getMessage().contains("duplicate")){
+				throw new BusinessException("该用户已被注册");
+			}
+		}catch (Exception e) {
 			e.printStackTrace();
-			return false;
 		}
+		return false;
 	}
 
 	@Override

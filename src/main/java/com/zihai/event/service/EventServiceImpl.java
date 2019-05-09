@@ -172,8 +172,7 @@ public class EventServiceImpl implements EventService {
 	}
 	@Override
 	public void save(Document event) throws IOException {
-		Subject currentUser = SecurityUtils.getSubject();
-		String username = (String)currentUser.getPrincipal();
+		String username = event.getString("username");
 		event.remove("num");
 		String message; //save or update
  		if(!event.containsKey("_id")){

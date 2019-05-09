@@ -2,21 +2,17 @@ package com.zihai.util;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.commons.collections4.IteratorUtils;
-import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson.JSON;
 import com.mongodb.Block;
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -60,6 +56,7 @@ public class MongoUtil {
 		mongoClient.close();
 	}
 	public static void main(String[] args) {
-		MongoUtil u = new MongoUtil();
+		Document d = MongoUtil.getCollection("message").find(new Document("receiver","nicool5")).first();
+		System.out.println(d.getObjectId("_id"));
 	}
 }

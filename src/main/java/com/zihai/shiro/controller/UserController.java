@@ -119,6 +119,7 @@ public class UserController {
 	public Result uploadHeadImg(@RequestParam(value="headImageFile",required=false)MultipartFile headImageFile,HttpServletRequest req) throws MalformedURLException {
 		 Subject currentUser = SecurityUtils.getSubject();
 		 String path = req.getServletContext().getResource("/").getPath()+"image/head/"+(String)currentUser.getPrincipal()+".jpg";
+		 log.info("uploadHeadImg.do path===" +path);
 		 try { 
 			 InputStream in = headImageFile.getInputStream();
 			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
