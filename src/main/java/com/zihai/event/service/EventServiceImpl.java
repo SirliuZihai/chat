@@ -87,7 +87,11 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public Document getEventById(String eventId) {
 		 Document event = new Document("_id",new ObjectId(eventId));
-		 return (Document) MongoUtil.Query(event, null, Document.class, "event").get(0);
+		 List result = MongoUtil.Query(event, null, Document.class, "event");
+		 if(result.size()>0){
+			 return (Document)result.get(0);
+		 }
+		 return null;
 	}
 	@Override
 	public List queryHistroy(Map filter1,String username) {
@@ -134,8 +138,10 @@ public class EventServiceImpl implements EventService {
 			@Override
 		       public void apply(final Document document) {
 				Document e =(Document) document.get("e");
-				e.put("_id", e.getObjectId("_id").toHexString());
-				l.add(e);
+				if(e !=null){
+					e.put("_id", e.getObjectId("_id").toHexString());
+					l.add(e);
+				}
 		       }
 		};
 		MongoUtil.getCollection("event_queue").aggregate(criteria).forEach(block);				
