@@ -34,9 +34,10 @@ public class SpringMail {
 		} catch (IOException e) {
 			System.out.println("load property error");
 		}
-		sender.setHost(property.getProperty("mail.host"));
+		sender.setHost(property.getProperty("host"));
 		sender.setUsername(property.getProperty("username"));
 		sender.setPassword(property.getProperty("password"));
+		sender.setJavaMailProperties(property);
 	}
 	
 	public String sendCode(String mailName,String code)throws MessagingException, IOException{
@@ -77,7 +78,7 @@ public class SpringMail {
 	
 	public static void main(String[] args) throws MessagingException, IOException, InterruptedException {
 		SpringMail mail = new SpringMail();
-		//mail.sendCode("345760650@qq.com");
+		mail.sendCode("345760650@qq.com","TEXT3");
 	}
 }
 

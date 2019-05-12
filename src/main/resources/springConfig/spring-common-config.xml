@@ -15,7 +15,7 @@
 	
 	<!--  <import resource="classpath:spring/bean-spring.xml" /> -->
 	  <import resource="classpath:springConfig/spring-shiro.xml"/> 
-	
+	  <import resource="classpath:springConfig/spring-encache.xml"/> 
 	
 	
 </beans>

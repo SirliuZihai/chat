@@ -10,7 +10,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 
 import javax.mail.MessagingException;
@@ -26,9 +25,11 @@ import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.SpringProperties;
+import org.springframework.cache.Cache;
+import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,24 +40,23 @@ import com.zihai.event.service.EventService;
 import com.zihai.shiro.service.UserService;
 import com.zihai.util.BusinessException;
 import com.zihai.util.DateUtil;
-import com.zihai.util.EnCacheUtil;
 import com.zihai.util.EncrypUtil;
 import com.zihai.util.MongoUtil;
 import com.zihai.util.Result;
 import com.zihai.util.SpringMail;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Element;
+import net.sf.ehcache.CacheException;
 //@CrossOrigin
 @Controller
 @RequestMapping("/shiro")
 public class ShiroController {
-	private final Logger log = Logger.getLogger(ShiroController.class);
+	private final Logger log = LoggerFactory.getLogger(getClass());
 	@Autowired
 	private UserService userService;
 	@Autowired
 	private EventService eventService;
-
+	@Autowired
+	private EhCacheCacheManager cacheManager;
 	@RequestMapping(value = "/manager.do")
 	public String manager() {
 		 Subject currentUser = SecurityUtils.getSubject();
@@ -189,12 +189,12 @@ public class ShiroController {
 		}
 		try {
 			new SpringMail().sendCode(mailName,s.toString());
+			Cache cache = cacheManager.getCache("EmailCode");
+			cache.put(uname, s.toString());
 		} catch (Exception e) {
+			e.printStackTrace();
 			return Result.failure("验证码发送失败");
 		}
-		Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
-		Element element = new Element(uname, s.toString());
-		cache.put(element);
 		return Result.success("验证码已发送");
 		
 	}
@@ -203,13 +203,13 @@ public class ShiroController {
 	public Result setMail2(String code,String mailName) throws MessagingException, IOException {
 		try {
 			String uname = (String) SecurityUtils.getSubject().getPrincipal();
-			Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
-			if(code.equals(cache.get(uname).getObjectValue().toString())){
+			Cache cache = cacheManager.getCache("EmailCode");
+			if(code.equals(cache.get(uname,String.class))){
 				userService.updateUser(new Document("mail",mailName).append("username", uname));
-				cache.remove(uname);
+				cache.evict(uname);
 				return Result.success("设置成功");
 			}else{
-				return Result.success("验证码错误");
+				return Result.failure("验证码错误");
 			}
 		} catch (Exception e) {
 			return Result.failure(e.getMessage());
@@ -240,19 +240,18 @@ public class ShiroController {
 		} catch (Exception e) {
 			return Result.failure("验证码发送失败");
 		}
-		Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
-		Element element = new Element(username, s.toString());
-		cache.put(element);
+		Cache cache = cacheManager.getCache("EmailCode");
+		cache.put(username, s.toString());
 		return Result.success("验证码已发送");
 	}
 	@RequestMapping(value = "/resetPassword_step2.do",method=RequestMethod.GET)
 	@ResponseBody
 	public Result resetPassword_step2(String code,String username,String password) throws MessagingException, IOException {
 		try {
-			Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
-			if(code.equals(cache.get(username).getObjectValue().toString())){
+			Cache cache = cacheManager.getCache("EmailCode");
+			if(code.equals(cache.get(username,String.class))){
 				userService.updateUser(new Document("password",password).append("username", username));
-				cache.remove(username);
+				cache.evict(username);
 				return Result.success("密码重置成功");
 			}else{
 				return Result.failure("验证码错误");
@@ -260,5 +259,15 @@ public class ShiroController {
 		} catch (Exception e) {
 			return Result.failure("验证码错误："+e.getMessage());
 		}
+	}
+	@RequestMapping(value="/test2.do",method = RequestMethod.GET)
+	public String test(){
+		Cache cache = cacheManager.getCache("EmailCode");
+		cache.put("test", "testVlue");
+		String s = cache.get("test",String.class);
+		String s1 = cache.get("test").toString();
+		log.info(s);
+		log.info("testVlue".equals(s)+"");
+		return "404";
 	}
 }
