@@ -33,17 +33,8 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public Boolean updateUser(Map user) {
-		Document doc = MongoUtil.getCollection("userInfo").findOneAndUpdate(Document.parse("{'username':'"+user.get("username")+"'}"), Document.parse("{$set:"+JSON.toJSONString(user)+"}"));
+		Document doc = MongoUtil.getCollection("user").findOneAndUpdate(Document.parse("{'username':'"+user.get("username")+"'}"), Document.parse("{$set:"+JSON.toJSONString(user)+"}"));
 		return doc!=null;
-	}
-	public Boolean changePassword(Map user) {
-		try {
-			MongoUtil.getCollection("user").updateOne(Document.parse("{'username':'"+user.get("username")+"'}"), Document.parse("{'password':'"+user.get("password")+"'}"));
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
 	}
 
 	
@@ -152,5 +143,10 @@ public class UserServiceImpl implements UserService {
 		doc = Document.parse("{'username':'"+relation.get("username")+"','people':'"+relation.get("people")+"'}");
 		if(MongoUtil.getCollection("relationship").findOneAndDelete(doc) == null)
 			throw new BusinessException("删除失败");		
+	}
+
+	@Override
+	public Document findUser(Document user) {
+		return MongoUtil.getCollection("user").find(user).first();
 	}
 }

@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bson.Document;
+
 import com.alibaba.fastjson.JSON;
 import com.zihai.util.Result;
 
 public interface UserService {
 	public Boolean createUser(Map user); //创建账户
-	public Boolean updateUser(Map user); //创建账户
-	public Boolean changePassword(Map user);//修改密码
+	public Boolean updateUser(Map user); //更新账户
+	public Document findUser(Document user);
 	public void correlationRoles(Long userId, Long... roleIds); //添加用户-角色关系
 	public void uncorrelationRoles(Long userId, Long... roleIds);// 移除用户-角色关系
 	/**

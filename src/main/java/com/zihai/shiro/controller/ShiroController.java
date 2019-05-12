@@ -3,13 +3,17 @@ package com.zihai.shiro.controller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Random;
 
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +28,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.SpringProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,9 +39,14 @@ import com.zihai.event.service.EventService;
 import com.zihai.shiro.service.UserService;
 import com.zihai.util.BusinessException;
 import com.zihai.util.DateUtil;
+import com.zihai.util.EnCacheUtil;
 import com.zihai.util.EncrypUtil;
 import com.zihai.util.MongoUtil;
 import com.zihai.util.Result;
+import com.zihai.util.SpringMail;
+
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
 //@CrossOrigin
 @Controller
 @RequestMapping("/shiro")
@@ -46,7 +56,7 @@ public class ShiroController {
 	private UserService userService;
 	@Autowired
 	private EventService eventService;
-	
+
 	@RequestMapping(value = "/manager.do")
 	public String manager() {
 		 Subject currentUser = SecurityUtils.getSubject();
@@ -156,5 +166,99 @@ public class ShiroController {
 	public String unauthorized() {
 		return "无权限";
 	}
+	@RequestMapping(value = "/getMail.do")
+	@ResponseBody
+	public Result getMail(){
+		String uname = (String) SecurityUtils.getSubject().getPrincipal();
+		List<Document> l = MongoUtil.Query(new Document("username",uname), new Document("mail",1), Document.class, "user");
+		if(l.size()>0){
+			return Result.success(null,l.get(0));
+		}else{
+			return Result.failure("none of mail");
+		}
+		
+	}
+	@RequestMapping(value = "/setMail_step1.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Result setMail(String mailName) throws MessagingException, IOException {
+		String uname = (String) SecurityUtils.getSubject().getPrincipal();
+		Random random = new Random();
+		StringBuilder s = new StringBuilder(String.valueOf(random.nextInt(1000000)));
+		while(s.length()<6){
+			s.insert(0, "0");
+		}
+		try {
+			new SpringMail().sendCode(mailName,s.toString());
+		} catch (Exception e) {
+			return Result.failure("验证码发送失败");
+		}
+		Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
+		Element element = new Element(uname, s.toString());
+		cache.put(element);
+		return Result.success("验证码已发送");
+		
+	}
+	@RequestMapping(value = "/setMail_step2.do", method=RequestMethod.GET)
+	@ResponseBody
+	public Result setMail2(String code,String mailName) throws MessagingException, IOException {
+		try {
+			String uname = (String) SecurityUtils.getSubject().getPrincipal();
+			Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
+			if(code.equals(cache.get(uname).getObjectValue().toString())){
+				userService.updateUser(new Document("mail",mailName).append("username", uname));
+				cache.remove(uname);
+				return Result.success("设置成功");
+			}else{
+				return Result.success("验证码错误");
+			}
+		} catch (Exception e) {
+			return Result.failure(e.getMessage());
+		}
+	}
 
+	
+	@RequestMapping(value = "/resetPassword_step1.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Result ResetPassword(String username,String mail) {
+		Document user = userService.findUser(new Document("username",username));
+		if(user == null){
+			return Result.failure("用户不存在。");
+		}
+		if(StringUtils.isEmpty(user.getString("mail"))){
+			return Result.failure("未绑定邮箱，无法发送验证码。");
+		}
+		if(!mail.equals(user.getString("mail"))){
+			return Result.failure("邮箱不正确");
+		}
+		Random random = new Random();
+		StringBuilder s = new StringBuilder(String.valueOf(random.nextInt(1000000)));
+		while(s.length()<6){
+			s.insert(0, "0");
+		}
+		try {
+			new SpringMail().sendCode(user.getString("mail"),s.toString());
+		} catch (Exception e) {
+			return Result.failure("验证码发送失败");
+		}
+		Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
+		Element element = new Element(username, s.toString());
+		cache.put(element);
+		return Result.success("验证码已发送");
+	}
+	@RequestMapping(value = "/resetPassword_step2.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Result resetPassword_step2(String code,String username,String password) throws MessagingException, IOException {
+		try {
+			Cache cache = EnCacheUtil.cacheManager.getCache("EmailCode");
+			if(code.equals(cache.get(username).getObjectValue().toString())){
+				userService.updateUser(new Document("password",password).append("username", username));
+				cache.remove(username);
+				return Result.success("密码重置成功");
+			}else{
+				return Result.failure("验证码错误");
+			}
+		} catch (Exception e) {
+			return Result.failure("验证码错误："+e.getMessage());
+		}
+	}
 }
