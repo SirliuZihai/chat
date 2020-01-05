@@ -93,8 +93,9 @@ public class EventController {
 	}
 	@RequestMapping(value = "/uploadtempfile.do" ,method = RequestMethod.POST)
 	@ResponseBody
-	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {
-		 String savepath = "/tempFile/"+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
+	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req,
+			@RequestParam(defaultValue="tempFile")String classify) throws MalformedURLException {
+		 String savepath = classify+"/"+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
 		 String path = req.getServletContext().getResource("/").getPath()+savepath;
 		 log.info("uploadtempfile.do path===" +path);
 		 InputStream in = null;

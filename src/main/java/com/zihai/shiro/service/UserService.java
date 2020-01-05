@@ -29,6 +29,10 @@ public interface UserService {
 	public Boolean updateOrInsertUserInfo(Map user);
 	public List<Map> searchUser(Map userInfo);
 	public List<Map> getRelationUser(HashMap userInfo);
+	/**
+	 * 获得标签
+	 * */
+	public List<String> getRelationTags();
 	public void updateRelation(Map relation);
 	public void addrelation(Map relation);
 	public Map findInfoByUsername2(String string);

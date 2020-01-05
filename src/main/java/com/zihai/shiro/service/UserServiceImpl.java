@@ -1,16 +1,21 @@
 package com.zihai.shiro.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.shiro.SecurityUtils;
 import org.bson.Document;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.mongodb.MongoWriteException;
+import com.mongodb.client.MongoCursor;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 
@@ -148,5 +153,21 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Document findUser(Document user) {
 		return MongoUtil.getCollection("user").find(user).first();
+	}
+
+	@Override
+	public List<String> getRelationTags() {
+		/*String username = (String)SecurityUtils.getSubject().getPrincipal();
+		List<String> list = new ArrayList<String>();
+		MongoCursor<Document> it =MongoUtil.getCollection("relationship").find(
+				Document.parse(String.format("{username:'%s'}",username)))
+				.projection(Document.parse("{tag:1}")).iterator();
+		Set<String> set = new HashSet<String>();
+		while(it.hasNext()){
+			Document d = it.next();
+			
+			list.add(d.getString("_id"));
+		}*/
+		return null;
 	}
 }
