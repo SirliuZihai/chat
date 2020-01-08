@@ -5,10 +5,18 @@ import java.util.List;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
+import com.zihai.tips.service.TipsServiceIml;
+import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
-
+@Service
 public class NotifyServiceImpl implements NotifyService {
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 
 	@Override
 	public Document countNofify(String currentUser) {
@@ -22,15 +30,32 @@ public class NotifyServiceImpl implements NotifyService {
 	@Override
 	public List<Document> queryNofify(Document filter) {
 		List<Document> pipeline = new ArrayList<Document>();
-		if("notes".equals(filter.getString("type"))){
-			pipeline.add(Document.parse(String.format("{$match:{receiver:'%s'，type:{$lte:4}}}",filter.getString("username"))));
-		}else if("operate".equals(filter.getString("type"))){
-			pipeline.add(Document.parse(String.format("{$match:{receiver:'%s'，type:{$gte:5}}}",filter.getString("username"))));
+		Integer type = filter.getInteger("type");
+		if(type>=5){
+			if(type == 5){ //申请的
+				pipeline.add(Document.parse(String.format("{$match:{sender:'%s',type:{$gte:5}}}",filter.getString("username"))));
+			}else if(filter.getInteger("type") == 6){//待处理的
+				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$gte:5}}}",filter.getString("username"))));
+			}else {
+				throw new BusinessException("无效参数");
+			}
+			pipeline.add(Document.parse("{'$lookup': {'as': 'e_list','foreignField': '_id','from': 'event','localField': 'relateId'}}"));			
+			pipeline.add(Document.parse("{'$unwind': {'path': '$e_list','preserveNullAndEmptyArrays': true}}"));
+			pipeline.add(new Document("$addFields",Document.parse("{e_title:'$e_list.title'}")));
+			pipeline.add(Document.parse("{$project: {e_list:0}}"));
 		}else{
-			return new ArrayList<Document>();
+			if(type == 0||type ==1 ){ //通知的
+				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$lte:4}}}}",filter.getString("username"))));
+			}else {
+				throw new BusinessException("无效参数");
+			}
 		}
+		
+		pipeline.add(new Document("$sort",new Document("_id",-1)));
+		pipeline.add(new Document("$addFields",Document.parse("{_id:{$toString:'$_id'},relateId:{$toString:'$relateId'}}")));
 		pipeline.add(new Document("$skip",filter.getInteger("skipNum")));
 		pipeline.add(new Document("$limit",20));
+		log.info(JSON.toJSONString(pipeline));
 		List<Document> result  = new ArrayList<Document>();
 		result = MongoUtil.getCollection("notify").aggregate(pipeline).into(result);
 		return result;
@@ -43,8 +68,9 @@ public class NotifyServiceImpl implements NotifyService {
 
 	@Override
 	public void ignoreNotify(Integer type ,String username) {
-		Document filter = new Document("receiver",username).append("type", type);
+		Document filter = new Document("receiver",username).append("state", 0).append("type", type);
 		Document update = Document.parse("{$set:{state:1}}");
+		log.info(JSON.toJSONString(filter));
 		MongoUtil.getCollection("notify").updateMany(filter,update);
 	}
 
@@ -52,7 +78,13 @@ public class NotifyServiceImpl implements NotifyService {
 	public void stateNotify(String id, Integer state,String receiver) {
 		Document filter = new Document("_id",new ObjectId(id)).append("receiver",receiver);
 		Document update = Document.parse(String.format("{$set:{state:%d}}",state));
+		log.info(JSON.toJSONString(filter));
 		MongoUtil.getCollection("notify").updateOne(filter,update);	
+	}
+
+	@Override
+	public Document getNotify(Document filter) {
+		return MongoUtil.getCollection("notify").find(filter).first();
 	}
 
 }

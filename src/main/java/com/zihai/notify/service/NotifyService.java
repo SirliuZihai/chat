@@ -6,6 +6,10 @@ import org.bson.Document;
 
 public interface NotifyService {
 	/**
+	 * 查询notify 的一条记录
+	 * */
+	public Document getNotify(Document filter);
+	/**
 	 * 获取待处理消息统计
 	 * {type:notes|operate , state: 0}
 	 * 0:点赞提示 1:评论提示    5申请加入操作6邀请加入操作
@@ -15,8 +19,8 @@ public interface NotifyService {
 	/**
 	 * 获取分类信息
 	 * {type:notes|operate} 
-	 * 0:点赞提示 1:评论提示    5申请加入操作6邀请加入操作
-	 * {type:'notes',skipNum:0} + username
+	 * type 0:点赞提示 1:评论提示    5申请加入操作6邀请加入操作
+	 * {type:'1',skipNum:0} + username
 	 * */
 	public List<Document> queryNofify(Document filter);
 	/**
@@ -26,7 +30,7 @@ public interface NotifyService {
 		sender
 		receiver
 		state 0待处理；1忽略，2：接受；3 拒绝
-		type 1:评论提示    5申请加入操作6邀请加入操作
+		type 0:点赞提示 1:评论提示    5申请加入操作6邀请加入操作
 	 */
 	public void addNotify(Document doc);
 	/**

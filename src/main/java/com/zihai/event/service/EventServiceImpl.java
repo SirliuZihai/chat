@@ -2,6 +2,7 @@ package com.zihai.event.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.springframework.web.socket.WebSocketSession;
 import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
+import com.zihai.notify.service.NotifyService;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 import com.zihai.websocket.EventChatHandler;
@@ -38,6 +40,9 @@ public class EventServiceImpl implements EventService {
 	
 	@Autowired
 	private EventChatHandler eventChatHandler;
+	@Autowired
+	private NotifyService notifyService;
+	
 
 	@Override
 	public void insertMessage(Document message) throws IOException {
@@ -54,7 +59,7 @@ public class EventServiceImpl implements EventService {
 				for(String other : relationship){
 					list.add(new Document("_id", new ObjectId()).append("username", other).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
 				}
-			}
+			}			
 		}else{
 			//send to yourself
 			list.add(new Document("_id", new ObjectId()).append("username",message.getString("sender")).append("eventId", message.getObjectId("_id")).append("type", 1).append("state", 0));
@@ -181,13 +186,26 @@ public class EventServiceImpl implements EventService {
 		String username = event.getString("username");
 		event.remove("num");
 		String message; //save or update
+		List<String> rela = new ArrayList<String>(event.getList("relationship", String.class));
  		if(!event.containsKey("_id")){
 			event.append("_id", new ObjectId());
+			//邀请所有
+			inviteOther(username,event.getObjectId("_id").toHexString(),rela); 
+			//去除所有
+			event.put("relationship", new ArrayList<String>());
 			MongoUtil.getCollection("event").insertOne(event);
 			message = username+"新建了该事件";
 		}else{
 			event.put("_id", new ObjectId(event.getString("_id")));
-			Document theupdate = MongoUtil.getCollection("event").findOneAndReplace(new Document("_id", event.getObjectId("_id")), event);				
+			Document criteria = new Document("_id", event.getObjectId("_id")).append("username",username);
+			Document f_event = MongoUtil.getCollection("event").find(criteria).first();
+			//邀请新人员
+			rela.removeAll(f_event.getList("relationship", String.class));
+			inviteOther(username,event.getObjectId("_id").toHexString(),rela); 
+			//去除新人员
+			event.getList("relationship", String.class).removeAll(rela);
+			event.put("relationship", new ArrayList<String>());
+			Document theupdate = MongoUtil.getCollection("event").findOneAndReplace(criteria, event);				
 			if(theupdate == null)
 				throw new BusinessException("该记录已被移除");
 			message = username+"更新了该事件";
@@ -216,7 +234,18 @@ public class EventServiceImpl implements EventService {
 		insertMessage(new Document("relateId",new ObjectId(event.getString("_id"))).append("data", message).append("type", "operate").append("sender", username));
 
 	}
-
+	private void inviteOther(String username,String event_id,List<String> rela){
+		//if has relationship ,clear and notify it 邀请
+		if((!CollectionUtils.isEmpty(rela))&&(!"nicool".equals(username))){
+			for(String other : rela){
+				Document d =  new Document("relateId",new ObjectId(event_id))
+						.append("sender",username).append("receiver", other)
+						 .append("state", 0).append("type", 6);
+				 		notifyService.addNotify(d);
+			}
+			log.info("已邀请:"+JSON.toJSONString(rela));
+		}
+	}
 	@Override
 	public void updateEventState(Document filter) {
 		MongoUtil.getCollection("event_queue").updateMany(filter, new Document().append("$set",new Document("state",1)));		

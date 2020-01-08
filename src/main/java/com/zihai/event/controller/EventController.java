@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zihai.event.service.EventService;
+import com.zihai.notify.service.NotifyService;
 import com.zihai.util.Result;
 
 
@@ -38,6 +39,8 @@ public class EventController {
 	private Logger log = LoggerFactory.getLogger(getClass());
 	@Autowired
 	private EventService eventService;
+	@Autowired
+	private NotifyService notifyService;
 	
 	@Value(value="${tempFilePath}")
 	private String tempFilePath;
@@ -58,6 +61,7 @@ public class EventController {
 			return Result.failure("错误："+e.getMessage());
 		}
 	}
+
 	@RequestMapping(value="/getEvent.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result getEvent(String eventId){
@@ -93,6 +97,28 @@ public class EventController {
 			return Result.failure(e.getMessage());
 		}
 	}
+	@RequestMapping(value="/participateEvent.do",method = RequestMethod.GET)
+	@ResponseBody
+	public Result participateEvent(String eventId){
+		try {
+		 String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		 String receiver = eventService.getEventById(eventId).getString("username");
+		 
+		 Document d =  new Document("relateId",new ObjectId(eventId)).append("sender",currentUser).append("receiver", receiver)
+				 .append("state", 0).append("type", 5);
+		 if(notifyService.getNotify(d)==null){
+			 notifyService.addNotify(d);
+			 return Result.success("已发送申请");
+		 }else{
+			 return Result.failure("不能重复申请");
+		 }
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info(e.getMessage());
+			return Result.failure("错误："+e.getMessage());
+		}
+	}
+
 	@RequestMapping(value = "/uploadtempfile.do" ,method = RequestMethod.POST)
 	@ResponseBody
 	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {

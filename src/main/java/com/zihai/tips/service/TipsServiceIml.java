@@ -6,23 +6,25 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.mongodb.Block;
 import com.mongodb.client.result.UpdateResult;
+import com.zihai.notify.service.NotifyService;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 @Service
 public class TipsServiceIml implements TipsService{
 	private final Logger log = LoggerFactory.getLogger(TipsServiceIml.class);
-
+	
+	@Autowired
+	private NotifyService notifyService;
 	@Override
 	public void addTip(Document document) {
 		ObjectId id = new ObjectId();
@@ -100,11 +102,24 @@ public class TipsServiceIml implements TipsService{
 		if(StringUtils.isEmpty(document.getString("commentId"))){
 			//动态
 			Document filter = new Document("_id",new ObjectId(document.getString("_id")));
+			String content = null;
 			if(true == document.getBoolean("like")){
 				 d=MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("likes",username)));
+				 content = username+"点赞了";
 			}else{
 				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("likes",username)));				
+				content = username+"取消了点赞";
 			}
+			if(d == null){
+				throw new BusinessException("无效操作");
+			}
+			//通知相联人 tips.publisher
+			String other = MongoUtil.getCollection("tips").find(
+					new Document(filter)).projection(new Document("publisher",1)).first().getString("publisher");
+			Document d1 =  new Document("relateId",new ObjectId(document.getString("_id")))
+					.append("sender",username).append("receiver", other)
+					 .append("state", 0).append("type", 0).append("content", content);
+			notifyService.addNotify(d1);
 		}else{
 			//评论
 			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", new ObjectId(document.getString("commentId")));
@@ -113,11 +128,17 @@ public class TipsServiceIml implements TipsService{
 			}else{
 				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.likes",username)));
 			}
+			if(d == null){
+				throw new BusinessException("无效操作");
+			}
+			//通知相联人 tips.customer.publisher
+			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
+			Document d1 =  new Document("relateId",document.getString("commentId"))
+					.append("sender",username).append("receiver", other)
+					 .append("state", 0).append("type", 0);
+			notifyService.addNotify(d1);
 		}
 		
-		if(d == null){
-			throw new BusinessException("无效操作");
-		}
 		
 	}
 
@@ -140,16 +161,30 @@ public class TipsServiceIml implements TipsService{
 			Document filter = new Document("_id",new ObjectId(document.getString("_id")));
 			entity.put("reply", new ArrayList<String>()); //初始化 回复
 			result = MongoUtil.getCollection("tips").updateOne(filter,new Document("$push",new Document("comments",entity)));
+			if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
+				throw new BusinessException("无效操作");
+			}
+			//通知相联人 tips.publisher
+			String other = MongoUtil.getCollection("tips").find(
+					new Document(filter)).projection(new Document("publisher",1)).first().getString("publisher");
+			Document d =  new Document("relateId",new ObjectId(document.getString("_id")))
+					.append("sender",publisher).append("receiver", other)
+					 .append("state", 0).append("type", 1);
+			notifyService.addNotify(d);
 		}else{
 			ObjectId ob_commentId = new ObjectId(commentId);
 			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", ob_commentId);
 			result = MongoUtil.getCollection("tips").updateOne(filter,new Document("$push",new Document("comments.reply",entity)));
+			if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
+				throw new BusinessException("无效操作");
+			}
+			//通知相联人 tips.customer.publisher
+			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
+			Document d =  new Document("relateId",commentId)
+					.append("sender",publisher).append("receiver", other)
+					 .append("state", 0).append("type", 1);
 		}
-
-		if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
-			throw new BusinessException("无效操作");
-		}
-		return id.toHexString();
+	return id.toHexString();
 	}
 
 	@Override
@@ -181,7 +216,6 @@ public class TipsServiceIml implements TipsService{
 		}
 		if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
 			throw new BusinessException("无效操作");
-		}	
+		}
 	}
-
 }

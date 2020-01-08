@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.stereotype.Controller;
@@ -57,6 +58,9 @@ public class ShiroController {
 	private EventService eventService;
 	@Autowired
 	private EhCacheCacheManager cacheManager;
+	@Value(value = "${helloworld}")
+	private String helloworld;
+	
 	@RequestMapping(value = "/manager.do")
 	public String manager() {
 		 Subject currentUser = SecurityUtils.getSubject();
@@ -145,11 +149,11 @@ public class ShiroController {
 					String date = DateUtil.DateToString(new Date(), "yyyyMMdd");
 					List<String> relationship = new ArrayList<String>();
 					relationship.add((String)user.get("username"));
-					eventService.save(new Document("username","nicool").append("title", "问候").append("type", "")
+					eventService.save(new Document("username","nicool").append("title", "问候").append("type", 3)
 							.append("starttime", date).append("endtime", date).append("relationship",relationship).append("public", false)
 							.append("place",Document.parse("{type: 'Point', coordinates: [], name: ''}")));
 					ObjectId event_key = MongoUtil.getCollection("event_queue").find(new Document("username",uname)).first().getObjectId("eventId");
-					eventService.insertMessage(new Document("sender","nicool").append("data", "您好，我叫nicool，很高兴能为您服务。").append("type", "text")
+					eventService.insertMessage(new Document("sender","nicool").append("data", helloworld).append("type", "text")
 							.append("relateId", event_key).append("receiver", relationship));
 				}
 				return "OK";

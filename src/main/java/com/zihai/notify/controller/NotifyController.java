@@ -38,13 +38,13 @@ public class NotifyController {
 			return Result.failure(e.getMessage());		
 		}	
 	}
-	@RequestMapping(value="queryNofify.do",method = RequestMethod.GET)
+	@RequestMapping(value="queryNofify.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result queryNofify(@RequestBody Map<String,Object> filter){
 		try {
 			filter.put("username", SecurityUtils.getSubject().getPrincipal().toString());
 			List<Document> result = notifyService.queryNofify(new Document(filter));
-			return Result.success(null);
+			return Result.success(null,result);
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
