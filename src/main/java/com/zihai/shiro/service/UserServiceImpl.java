@@ -83,18 +83,11 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 	@Override
-	public Boolean updateOrInsertUserInfo(Map user) {
-		Document doc;
-		try {
-			doc = Document.parse("{'username':'"+user.get("username")+"'}");
-			Document doc2 =Document.parse("{$set:"+JSONObject.toJSONString(user)+"}");
-				if(MongoUtil.getCollection("userInfo").findOneAndUpdate(doc,doc2)==null)
-					MongoUtil.getCollection("userInfo").insertOne(Document.parse(JSONObject.toJSONString(user)));;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}	
-		return true;
+	public void updateOrInsertUserInfo(Map user) {
+		Document doc = Document.parse("{'username':'"+user.get("username")+"'}");
+		Document doc2 =Document.parse("{$set:"+JSONObject.toJSONString(user)+"}");
+			if(MongoUtil.getCollection("userInfo").findOneAndUpdate(doc,doc2)==null)
+				MongoUtil.getCollection("userInfo").insertOne(Document.parse(JSONObject.toJSONString(user)));;
 	}
 
 	@Override

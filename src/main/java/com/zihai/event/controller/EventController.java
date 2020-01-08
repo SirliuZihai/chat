@@ -5,14 +5,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -21,6 +19,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,9 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.fastjson.JSON;
 import com.zihai.event.service.EventService;
-import com.zihai.util.MongoUtil;
 import com.zihai.util.Result;
 
 
@@ -41,6 +38,11 @@ public class EventController {
 	private Logger log = LoggerFactory.getLogger(getClass());
 	@Autowired
 	private EventService eventService;
+	
+	@Value(value="${tempFilePath}")
+	private String tempFilePath;
+	@Value(value="${addressPath}")
+	private String addressPath;
 	
 	@RequestMapping(value="/saveEvent.do",method = RequestMethod.POST)
 	@ResponseBody
@@ -93,31 +95,19 @@ public class EventController {
 	}
 	@RequestMapping(value = "/uploadtempfile.do" ,method = RequestMethod.POST)
 	@ResponseBody
-	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req,
-			@RequestParam(defaultValue="tempFile")String classify) throws MalformedURLException {
-		 String savepath = classify+"/"+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
-		 String path = req.getServletContext().getResource("/").getPath()+savepath;
-		 log.info("uploadtempfile.do path===" +path);
-		 InputStream in = null;
-		 FileOutputStream out = null;
+	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {
+		 String path =tempFilePath+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
+		 log.info(path);
 		 try { 
-			 in = tempFile.getInputStream();
+			 InputStream in = tempFile.getInputStream();
 			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
 			 if(!f.exists())f.mkdirs();
-			 out = new FileOutputStream(path);
+			 FileOutputStream out = new FileOutputStream(path);
 			IOUtils.copy(in, out);
-			 return Result.success(savepath);
+			 return Result.success(path.replace(addressPath, ""));
 		} catch (IOException e) {
 			return Result.failure(e.getMessage());
 		}finally{
-			try {
-				if(in !=null)in.close();
-			} catch (IOException e) {
-			}
-			try {
-				if(out !=null)out.close();
-			} catch (IOException e) {
-			}	
 		}
 		
 	}

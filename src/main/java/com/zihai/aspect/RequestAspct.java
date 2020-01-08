@@ -1,5 +1,7 @@
 package com.zihai.aspect;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.aspectj.lang.JoinPoint;
@@ -27,7 +29,6 @@ public class RequestAspct {
 	 * */
 	@Pointcut("execution(public * com.zihai.*.controller..*.*(..))")
 	public void weblog(){
-		//log.info("weblog________");
 	}
 	
 	@Before("weblog()")

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.json.Json;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.shiro.SecurityUtils;
@@ -18,6 +19,7 @@ import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSON;
 import com.zihai.event.controller.EventController;
 import com.zihai.shiro.service.UserService;
 import com.zihai.util.BusinessException;
@@ -36,6 +39,8 @@ public class UserController {
 	private final Logger log = Logger.getLogger(UserController.class);
 	@Autowired
 	private UserService userService;
+	@Value(value = "${imagePath}")
+	private String imagePath;
 	
 	UserController(){
 		log.info("init");
@@ -46,9 +51,12 @@ public class UserController {
 	public Result saveuserInfo(@RequestBody Map user) {
 		 Subject currentUser = SecurityUtils.getSubject();
 		 user.put("username", (String)currentUser.getPrincipal());
-		 if(userService.updateOrInsertUserInfo(user))
-			 return Result.success("保存成功");
-		return Result.success("保存失败");
+		 try {
+			userService.updateOrInsertUserInfo(user);
+			return Result.success("保存成功");
+		 } catch (Exception e) {
+			return Result.failure("保存失败["+e.getMessage()+"]");
+		 }
 	}
 	@RequestMapping(value = "/userInfo.do" ,method = RequestMethod.POST)
 	@ResponseBody
@@ -81,6 +89,7 @@ public class UserController {
 	@RequestMapping(value = "/updateRelation.do" ,method = RequestMethod.POST)
 	@ResponseBody
 	public Result updateRelation(@RequestBody Map relation) {
+		 log.info(JSON.toJSONString(relation));
 		 Subject currentUser = SecurityUtils.getSubject();
 		 relation.put("username", currentUser.getPrincipal());
 		 try {
@@ -118,7 +127,7 @@ public class UserController {
 	@ResponseBody
 	public Result uploadHeadImg(@RequestParam(value="headImageFile",required=false)MultipartFile headImageFile,HttpServletRequest req) throws MalformedURLException {
 		 Subject currentUser = SecurityUtils.getSubject();
-		 String path = req.getServletContext().getResource("/").getPath()+"image/head/"+(String)currentUser.getPrincipal()+".jpg";
+		 String path = imagePath+"head/"+(String)currentUser.getPrincipal()+".jpg";
 		 log.info("uploadHeadImg.do path===" +path);
 		 try { 
 			 InputStream in = headImageFile.getInputStream();

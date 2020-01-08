@@ -5,14 +5,20 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+
 @Controller
-@RequestMapping("shiro")
+@ConfigurationProperties
+@RequestMapping("/shiro")
 public class ShiroTestController {
 	private Logger log = LoggerFactory.getLogger(getClass());
+	@Value(value = "${tempFilePath}")
+	private String imagePath;
 	
 	@RequestMapping("test1")@RequiresRoles("admin")@ResponseBody
 	public String test1(){
@@ -20,11 +26,17 @@ public class ShiroTestController {
 		return "通过了test1";
 	}
 	
-	@RequestMapping("test2")
+	@RequestMapping("/test2")
 	@RequiresPermissions("account:create")
 	@ResponseBody
 	public String test2(){
 		log.info(SecurityUtils.getSubject().getPrincipal()+"拥有account:create权限  通过了test2");
 		return "通过了test2";
+	}
+	@RequestMapping("/test3")
+	@ResponseBody
+	public String test3(){
+		log.info("心跳测试"+imagePath);
+		return "通过了test2"+imagePath;
 	}
 }

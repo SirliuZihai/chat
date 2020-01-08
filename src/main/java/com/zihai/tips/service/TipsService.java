@@ -3,10 +3,14 @@ package com.zihai.tips.service;
 import java.util.List;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 public interface TipsService {
 	public void addTip(Document document);
 	public void deleteTip(Document document);
+	/**
+	 * 空方法
+	 * */
 	public void updateTip(Document document);
 	/**
 	 * 
@@ -17,12 +21,21 @@ public interface TipsService {
 	/**
 	 * 点赞/取消
 	 * 
-	 * type{tip comment}
+	 * document{_id:'',commentId:'',replyId:'',like:true}+ username
 	 * */
-	public void support(Document document);
-	
-	public void addCommend(Document document);
-	
-	public void removeCommend(Document document);
+	public void like(Document document);
+	/**
+	 * 增加评论/回复
+	 * document {_id:'',commentId:'',content:''} + username
+	 * @return 
+	 * 		操作的id
+	 * */
+	public String addComment(Document document);
+	/**
+	 * 删除评论/回复
+	 * document{_id:'',commentId:'',replyId:''} + username
+	 * @param 
+	 */
+	public void removeComment(Document document);
 	
 }

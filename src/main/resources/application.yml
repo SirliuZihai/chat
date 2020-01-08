@@ -5,11 +5,11 @@ server:
     session:
       cookie:
         path: /
-        max-age: 999999999  
-      timeout: 999999999  
+        max-age: 999999999
+      timeout: 999999999
   tomcat:
-    accept-count: 5
-    max-threads: 1000  
+    accept-count: 20000
+    max-threads: 2000 
 spring:
   servlet:
     multipart:
@@ -20,21 +20,22 @@ spring:
       prefix: /page/
       suffix: .html
   jmx:
-    enabled: false
+    enabled: false      
   devtools:
     restart:
       enabled: false
 management:
   endpoint:
     shutdown:
-      enabled: true
+      enabled: true  
   endpoints:
     web:
       exposure.include: "*"
-      base-path: /Actuator
+      base-path: /Actuator      
   server:
       port: 8085
-      address: 127.0.0.1
+      address: 127.0.0.1 
+      
 logging:
   file: /home/yizhi/logging/myapp.log
   level:

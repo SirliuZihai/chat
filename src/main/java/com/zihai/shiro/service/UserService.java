@@ -26,7 +26,7 @@ public interface UserService {
 	/**
 	 * 更新userInfo
 	 * */
-	public Boolean updateOrInsertUserInfo(Map user);
+	public void updateOrInsertUserInfo(Map user);
 	public List<Map> searchUser(Map userInfo);
 	public List<Map> getRelationUser(HashMap userInfo);
 	/**
