@@ -15,7 +15,7 @@ public interface NotifyService {
 	 * 0:点赞提示 1:评论提示    5申请加入操作6邀请加入操作
 	 * state	0待处理；1忽略，2：接受；3 拒绝
 	 * */
-	public Document countNofify(String currentUser);
+	public List<Document> countNofify(String currentUser);
 	/**
 	 * 获取分类信息
 	 * {type:notes|operate} 

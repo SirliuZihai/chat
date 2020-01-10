@@ -28,8 +28,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSON;
 import com.zihai.event.service.EventService;
 import com.zihai.notify.service.NotifyService;
+import com.zihai.util.BusinessException;
 import com.zihai.util.Result;
 
 
@@ -51,8 +53,8 @@ public class EventController {
 	@ResponseBody
 	public Result saveEvent(@RequestBody Map<String,Object> data){
 		 Document event = new Document(data);
-		 Subject currentUser = SecurityUtils.getSubject();
-		 event.append("username", currentUser.getPrincipal());
+		 String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		 event.append("username", currentUser);
 		 try {
 			eventService.save(event);
 			return Result.success("保存成功");
@@ -89,14 +91,59 @@ public class EventController {
 	@ResponseBody
 	public Result deletEvent(@RequestBody Map<String,Object> event){
 		 try {
-			Document filter = new Document("_id",new ObjectId((String)event.get("_id"))).append("username", event.get("username"));
-			eventService.deleteEvent(filter);
+			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+			eventService.deleteEvent(currentUser,(String)event.get("_id"));
 			return Result.success("删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Result.failure(e.getMessage());
 		}
 	}
+	@RequestMapping(value="accept.do",method = RequestMethod.GET)
+	@ResponseBody
+	public Result accept(String _id,String eventId,String sender,String receiver,Integer type){
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		Document event = eventService.getEventById(eventId);
+		if(!currentUser.equals(receiver)){
+			return Result.failure("操作人非法");
+		}
+		String people = null; // add men
+		String op_people = null; // op men
+		List<String> rela = event.getList("relationship", String.class);
+		if(type == 5)
+			people = sender;
+			op_people = receiver;
+		if(type == 6)
+			people = receiver;
+			op_people = sender;
+		if(rela.contains(people)){
+			return Result.failure("不能重复加入");
+		}
+		try{
+			eventService.addRelation(eventId, people, op_people);
+			notifyService.stateNotify(_id,2,currentUser);
+			return Result.success("已接受");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+			return Result.failure(e.getMessage());
+		}		
+	}
+	@RequestMapping(value="deny.do",method = RequestMethod.GET)
+	@ResponseBody
+	public Result deny(String _id){
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		try{
+			notifyService.stateNotify(_id,3,currentUser);
+			return Result.success("已拒绝");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+			return Result.failure(e.getMessage());
+		}	
+	}
+
+	
 	@RequestMapping(value="/participateEvent.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result participateEvent(String eventId){

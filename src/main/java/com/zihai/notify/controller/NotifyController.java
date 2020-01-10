@@ -31,7 +31,7 @@ public class NotifyController {
 	public Result countNofify(){
 		try {
 			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			Document result = notifyService.countNofify(currentUser);
+			List<Document> result = notifyService.countNofify(currentUser);
 			return Result.success(null,result);
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -48,7 +48,7 @@ public class NotifyController {
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			return Result.failure(e.getMessage());		
-		}	
+		}
 	}
 
 	@RequestMapping(value="ignoreNotify.do",method = RequestMethod.GET)
@@ -56,7 +56,12 @@ public class NotifyController {
 	public Result ignoreNotify(Integer type){
 		try {
 			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			notifyService.ignoreNotify(type,currentUser);
+			if(type == 0 || type ==1){
+				notifyService.ignoreNotify(1,currentUser);
+				notifyService.ignoreNotify(0,currentUser);
+			}else{
+				notifyService.ignoreNotify(type,currentUser);
+			}
 			return Result.success(null);
 		} catch (Exception e) {
 			log.error(e.getMessage());

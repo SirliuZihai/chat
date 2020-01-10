@@ -1,6 +1,7 @@
 package com.zihai.websocket;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +41,16 @@ public class EventChatHandler extends AbstractWebSocketHandler {
 			type = "image";
 			data = message.getPayload().substring(8);
 		}
-		eventService.insertMessage(new Document("sender",username).append("data", data).append("type", type)
-				.append("relateId", new ObjectId(eventId)));
+		if(eventService.hasInEvent(new ObjectId(eventId), username)){
+			eventService.insertMessage(new Document("sender",username).append("data", data).append("type", type)
+					.append("relateId", new ObjectId(eventId)));
+		}else{
+			ArrayList<String> receiver = new ArrayList<String>();
+			receiver.add(username);
+			eventService.insertMessage(new Document("sender",username).append("data", "您已不在该事件中").append("type", "operate")
+					.append("relateId", new ObjectId(eventId)).append("receiver", receiver));
+		}
+	
 	}
 	@Override
 	public  void afterConnectionEstablished(WebSocketSession session){

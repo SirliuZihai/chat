@@ -63,7 +63,10 @@ public class TipsServiceIml implements TipsService{
 		 List<Document> criteria = new ArrayList<Document>();
 		 //事件ID
 		if(StringUtils.isNotEmpty(document.getString("eventId"))){
-			 criteria.add(Document.parse(String.format("{'$match': {'eventId': '%s'}}}", document.getString("eventId"))));
+			 criteria.add(Document.parse(String.format("{'$match': {'eventId': ObjectId('%s')}}", document.getString("eventId"))));
+		}
+		if(StringUtils.isNotEmpty(document.getString("tipId"))){
+			 criteria.add(Document.parse(String.format("{'$match': {'_id': ObjectId('%s')}}", document.getString("tipId"))));
 		}
 		//关注人
 		 criteria.add(Document.parse(String.format("{'$match': {'publisher': {'$in': %s}}}", JSON.toJSONString(focus))));
@@ -105,10 +108,10 @@ public class TipsServiceIml implements TipsService{
 			String content = null;
 			if(true == document.getBoolean("like")){
 				 d=MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("likes",username)));
-				 content = username+"点赞了";
+				 content = username+"点赞了您的动态";
 			}else{
 				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("likes",username)));				
-				content = username+"取消了点赞";
+				content = username+"取消点赞了您的动态";
 			}
 			if(d == null){
 				throw new BusinessException("无效操作");
@@ -122,11 +125,14 @@ public class TipsServiceIml implements TipsService{
 			notifyService.addNotify(d1);
 		}else{
 			//评论
+			String content = null;
 			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", new ObjectId(document.getString("commentId")));
 			if(true == document.getBoolean("like")){
 				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.likes",username)));
+				content = username+"点赞了您的评论";
 			}else{
 				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.likes",username)));
+				content = username+"取消点赞了您的评论";
 			}
 			if(d == null){
 				throw new BusinessException("无效操作");
@@ -135,7 +141,7 @@ public class TipsServiceIml implements TipsService{
 			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
 			Document d1 =  new Document("relateId",document.getString("commentId"))
 					.append("sender",username).append("receiver", other)
-					 .append("state", 0).append("type", 0);
+					 .append("state", 0).append("type", 0).append("content", content);
 			notifyService.addNotify(d1);
 		}
 		
@@ -201,15 +207,14 @@ public class TipsServiceIml implements TipsService{
 		UpdateResult result = null; // finded doc
 		if(StringUtils.isEmpty(replyId)){	
 			Document filter = new Document("_id",o_id).append("comments._id", o_commentId).append("comments.publisher", publisher);
-			Document opBson  = Document.parse(String.format("{$pull:{comments:{$eq:['comments._id','$toObjectId(%s)']}}}", commentId));
+			Document opBson  = Document.parse(String.format("{$pull:{comments:{$eq:['comments._id',ObjectId('%s')]}}}", commentId));
 			log.info("removeComment filter ==="+JSON.toJSONString(filter));
 			log.info("removeComment opBson ==="+JSON.toJSONString(opBson));
 			result = MongoUtil.getCollection("tips").updateOne(filter,opBson);
 		}
 		else {
-			ObjectId o_replyId = new ObjectId(replyId); //toObjectId
 			Document filter = new Document("_id",o_id).append("comments._id", o_commentId).append("comments.reply._id", o_id).append("comments.reply.publisher", publisher);
-			Document opBson  = Document.parse(String.format("{$pull:{comments.reply:{$eq:['comments.reply._id','$toObjectId(%s)']}}}", replyId));
+			Document opBson  = Document.parse(String.format("{$pull:{comments.reply:{$eq:['comments.reply._id',ObjectId('%s')]}}}", replyId));
 			log.info("removeComment filter ==="+JSON.toJSONString(filter));
 			log.info("removeComment opBson ==="+JSON.toJSONString(opBson));
 			result = MongoUtil.getCollection("tips").updateOne(filter,opBson);

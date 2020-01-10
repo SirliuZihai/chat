@@ -1,9 +1,14 @@
 package com.zihai.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -43,6 +48,20 @@ public class FileUtil {
           	
           }
       }
+    /**
+     * Thread.currentThread().getContextClassLoader().path + name
+     * */	
+    public static String getText(String filename) throws IOException{
+    	InputStream stream =Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+    	InputStreamReader  r = new InputStreamReader(stream);
+    	BufferedReader read = new BufferedReader(r);
+    	StringBuilder builder = new StringBuilder();
+    	String s =null;
+    	while((s = read.readLine())!=null){
+    		builder.append(s);
+    	}
+    	return builder.toString();
+    }
     
     public static void main(String[] args) {
         //2个源文件

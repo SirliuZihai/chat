@@ -42,6 +42,7 @@ import com.zihai.shiro.service.UserService;
 import com.zihai.util.BusinessException;
 import com.zihai.util.DateUtil;
 import com.zihai.util.EncrypUtil;
+import com.zihai.util.FileUtil;
 import com.zihai.util.MongoUtil;
 import com.zihai.util.Result;
 import com.zihai.util.SpringMail;
@@ -58,8 +59,12 @@ public class ShiroController {
 	private EventService eventService;
 	@Autowired
 	private EhCacheCacheManager cacheManager;
-	@Value(value = "${helloworld}")
-	private String helloworld;
+
+	private String introduce;
+	
+	ShiroController() throws IOException{
+			introduce = FileUtil.getText("introduce.txt");
+	}
 	
 	@RequestMapping(value = "/manager.do")
 	public String manager() {
@@ -149,11 +154,11 @@ public class ShiroController {
 					String date = DateUtil.DateToString(new Date(), "yyyyMMdd");
 					List<String> relationship = new ArrayList<String>();
 					relationship.add((String)user.get("username"));
-					eventService.save(new Document("username","nicool").append("title", "问候").append("type", 3)
+					eventService.saveAndRelate(new Document("username","nicool").append("title", "问候").append("type", 3)
 							.append("starttime", date).append("endtime", date).append("relationship",relationship).append("public", false)
 							.append("place",Document.parse("{type: 'Point', coordinates: [], name: ''}")));
 					ObjectId event_key = MongoUtil.getCollection("event_queue").find(new Document("username",uname)).first().getObjectId("eventId");
-					eventService.insertMessage(new Document("sender","nicool").append("data", helloworld).append("type", "text")
+					eventService.insertMessage(new Document("sender","nicool").append("data", introduce).append("type", "text")
 							.append("relateId", event_key).append("receiver", relationship));
 				}
 				return "OK";
