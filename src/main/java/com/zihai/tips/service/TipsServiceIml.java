@@ -46,8 +46,7 @@ public class TipsServiceIml implements TipsService{
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public List queryTip(Document document,String username) {
-		
+	public List queryTip(Document document,String username) {		
 		//已关注的集合
 		Set<String> focus = new HashSet<String>();
 		focus.add(username);
@@ -79,7 +78,7 @@ public class TipsServiceIml implements TipsService{
 		 //过滤r_list元素，获取关联人
 		 criteria.add(Document.parse(String.format("{'$addFields':{r_list:{$filter:{input: '$r_list',as: 'item',cond: { $eq: [ '$$item.people', '%s' ] }}},likesNum:{$size: '$likes'},comments:{$size: '$comments'},likes:{$in:['%s','$likes']}}}",username,username)));
 		 criteria.add(new Document().append("$unwind",new Document().append("path", "$r_list").append("preserveNullAndEmptyArrays", true)));
-		 criteria.add(new Document().append("$unwind",new Document().append("path", "$e_list").append("preserveNullAndEmptyArrays", true)));
+		 criteria.add(new Document().append("$unwind",new Document().append("path", "$e_list").append("preserveNullAndEmptyArrays", false)));
 		 //获取 动态与联系人标签交集   存在可见 转ObjectId
 		 criteria.add(Document.parse(String.format("{$addFields:{'r_list.intersection':{$setIntersection:['$range','$r_list.tags']},event_isJoin:{$or:[{$eq:['$e_list.username','%s']},{$in:['%s','$e_list.relationship']}]},event_title:'$e_list.title',_id:{$toString:'$_id'},eventId:{$toString:'$eventId'},event_starttime:'$e_list.starttime',event_endtime:'$e_list.endtime'}}",username,username)));
 		 

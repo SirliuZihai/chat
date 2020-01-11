@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.shiro.SecurityUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -35,6 +36,12 @@ public class RequestAspct {
 	public void doBefore(JoinPoint joinPoint){
 		ServletRequestAttributes attr = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
 		HttpServletRequest request = attr.getRequest();
-		log.info("URL————"+request.getRequestURL().toString());
+		
+		try {
+			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+			if(currentUser!=null)
+				log.info(currentUser +"request ————"+request.getRequestURL().toString());
+		} catch (Exception e) {
+		}
 	}
 }

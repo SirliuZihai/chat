@@ -279,7 +279,7 @@ public class EventServiceImpl implements EventService {
 	
 	@Override
 	public void addRelation(String _id,String people,String username) throws IOException {
-		String message =username + "将"+ people +"加入了该事件";
+		String message =people +"加入了事件中";
 		Document filter = new Document("_id",new ObjectId(_id)).append("username", username);
 		Document update = new Document("$addToSet",new Document("relationship",people));
 		UpdateResult result = MongoUtil.getCollection("event").updateOne(filter, update);
@@ -340,24 +340,28 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void deleteEvent(String username ,String eventId) {
 		Document event = getEventById(eventId);
-		if(event == null){
+		if(event == null||StringUtils.isEmpty(event.getString("username"))){
 			throw new BusinessException("该事件已被移除");
 		}
 		event.put("_id", new ObjectId(event.getString("_id")));
-		List relationship = new ArrayList<String>(); //待通知对象
+		List<String> relationship = new ArrayList<String>(); //待通知对象
 		String message = null; //通知内容
-		if(((String)event.get("username")).equals(username)){
-			if(MongoUtil.getCollection("event").findOneAndDelete(event)==null){
-				throw new BusinessException("该事件已被移除");
-			}
-			message = username + "将事件删除";
+		if(event.getString("username").equals(username)){			
 			relationship = event.getList("relationship", String.class);
-			//删除相关消息
+			if(CollectionUtils.isEmpty(relationship)){
+				MongoUtil.getCollection("event").findOneAndUpdate(new Document("_id",event.getObjectId("_id")), new Document("$set",new Document("username", "")));
+			}else{
+				String newAdmin = relationship.remove(0);
+				MongoUtil.getCollection("event").findOneAndUpdate(new Document("_id",event.getObjectId("_id")), new Document("$set",new Document("username", newAdmin).append("relationship", relationship)));
+				message = username + "退出事件,新的管理员为："+newAdmin;
+			}
+			
+			/*//删除相关消息
 			DeleteResult result = MongoUtil.getCollection("message").deleteMany(new Document("relateId",event.getObjectId("_id")));
 			log.info("删除相关消息数量："+result.getDeletedCount());
 			//删除相关动态
 			DeleteResult result2 =MongoUtil.getCollection("tips").deleteMany(new Document("eventId",event.getObjectId("_id")));
-			log.info("删除相关动态数量："+result2.getDeletedCount());
+			log.info("删除相关动态数量："+result2.getDeletedCount());*/
 		}else{
 			List<String> relation = event.getList("relationship", String.class);
 			for(String name : relation){

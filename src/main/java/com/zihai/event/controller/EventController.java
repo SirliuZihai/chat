@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -132,8 +133,8 @@ public class EventController {
 	@RequestMapping(value="deny.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result deny(String _id){
-		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
 		try{
+			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
 			notifyService.stateNotify(_id,3,currentUser);
 			return Result.success("已拒绝");
 		} catch (Exception e) {
@@ -149,8 +150,10 @@ public class EventController {
 	public Result participateEvent(String eventId){
 		try {
 		 String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-		 String receiver = eventService.getEventById(eventId).getString("username");
-		 
+		 Document event = eventService.getEventById(eventId);
+		 if(event==null||StringUtils.isEmpty(event.getString("username")))
+			 return Result.failure("该事件已删除");
+		 String receiver = event.getString("username");	 
 		 Document d =  new Document("relateId",new ObjectId(eventId)).append("sender",currentUser).append("receiver", receiver)
 				 .append("state", 0).append("type", 5);
 		 if(notifyService.getNotify(d)==null){

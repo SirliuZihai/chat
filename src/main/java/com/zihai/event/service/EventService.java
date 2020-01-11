@@ -53,7 +53,8 @@ public interface EventService {
 	 * */
 	public void saveAndRelate(Document event) throws IOException;
 	/**
-	 * 查询事件
+	 * 查询事件,
+	 * @return no found is null
 	 * */
 	public Document getEventById(String eventId);
 

@@ -14,6 +14,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.alibaba.fastjson.JSON;
+import com.mongodb.client.result.UpdateResult;
 import com.zihai.util.BusinessException;
 import com.zihai.util.MongoUtil;
 import com.zihai.websocket.HomeEventHandler;
@@ -57,7 +58,7 @@ public class NotifyServiceImpl implements NotifyService {
 		}
 		
 		pipeline.add(new Document("$sort",new Document("_id",-1)));
-		pipeline.add(new Document("$addFields",Document.parse("{_id:{$toString:'$_id'},relateId:{$toString:'$relateId'}}")));
+		pipeline.add(new Document("$addFields",Document.parse("{_id:{$toString:'$_id'},relateId:{$toString:'$relateId'},'e_list._id':{$toString:'$e_list._id'}}")));
 		pipeline.add(new Document("$skip",filter.getInteger("skipNum")));
 		pipeline.add(new Document("$limit",20));
 		log.info(JSON.toJSONString(pipeline));
@@ -90,8 +91,7 @@ public class NotifyServiceImpl implements NotifyService {
 	public void stateNotify(String id, Integer state,String receiver) {
 		Document filter = new Document("_id",new ObjectId(id)).append("receiver",receiver);
 		Document update = Document.parse(String.format("{$set:{state:%d}}",state));
-		log.info(JSON.toJSONString(filter));
-		MongoUtil.getCollection("notify").updateOne(filter,update);	
+		UpdateResult result = MongoUtil.getCollection("notify").updateOne(filter,update);
 	}
 
 	@Override
