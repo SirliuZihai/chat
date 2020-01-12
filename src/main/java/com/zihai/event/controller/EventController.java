@@ -56,49 +56,30 @@ public class EventController {
 		 Document event = new Document(data);
 		 String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
 		 event.append("username", currentUser);
-		 try {
-			eventService.save(event);
-			return Result.success("保存成功");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Result.failure("错误："+e.getMessage());
-		}
+		 eventService.save(event);
+		 return Result.success("保存成功");
 	}
 
 	@RequestMapping(value="/getEvent.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result getEvent(String eventId){
-		 try {
-			Document d = eventService.getEventById(eventId);
-			return Result.success(null,d);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Result.failure("错误："+e.getMessage());
-		}
+		Document d = eventService.getEventById(eventId);
+		return Result.success(null,d);
 	}
 	
 	@RequestMapping(value="/queryHistroy.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result queryEvent(@RequestBody Map<String,Object> filter){
 		 Subject currentUser = SecurityUtils.getSubject();
-		 try {
-			List<Document> events = eventService.queryHistroy(filter,(String)currentUser.getPrincipal());
-			return Result.success(null,events);
-		} catch (Exception e) {
-			return Result.failure("错误："+e.getMessage());
-		}
+		 List<Document> events = eventService.queryHistroy(filter,(String)currentUser.getPrincipal());
+		 return Result.success(null,events);
 	}
 	@RequestMapping(value="/deleteEvent.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result deletEvent(@RequestBody Map<String,Object> event){
-		 try {
-			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			eventService.deleteEvent(currentUser,(String)event.get("_id"));
-			return Result.success("删除成功");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Result.failure(e.getMessage());
-		}
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		eventService.deleteEvent(currentUser,(String)event.get("_id"));
+		return Result.success("删除成功");
 	}
 	@RequestMapping(value="accept.do",method = RequestMethod.GET)
 	@ResponseBody
@@ -120,36 +101,23 @@ public class EventController {
 		if(rela.contains(people)){
 			return Result.failure("不能重复加入");
 		}
-		try{
-			eventService.addRelation(eventId, people, op_people);
-			notifyService.stateNotify(_id,2,currentUser);
-			return Result.success("已接受");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());
-		}		
+		eventService.addRelation(eventId, people, op_people);
+		notifyService.stateNotify(_id,2,currentUser);
+		return Result.success("已接受");	
 	}
 	@RequestMapping(value="deny.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result deny(String _id){
-		try{
-			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			notifyService.stateNotify(_id,3,currentUser);
-			return Result.success("已拒绝");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());
-		}	
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		notifyService.stateNotify(_id,3,currentUser);
+		return Result.success("已拒绝");
 	}
 
 	
 	@RequestMapping(value="/participateEvent.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result participateEvent(String eventId){
-		try {
-		 String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
 		 Document event = eventService.getEventById(eventId);
 		 if(event==null||StringUtils.isEmpty(event.getString("username")))
 			 return Result.failure("该事件已删除");
@@ -162,11 +130,6 @@ public class EventController {
 		 }else{
 			 return Result.failure("不能重复申请");
 		 }
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.info(e.getMessage());
-			return Result.failure("错误："+e.getMessage());
-		}
 	}
 
 	@RequestMapping(value = "/uploadtempfile.do" ,method = RequestMethod.POST)
@@ -179,7 +142,7 @@ public class EventController {
 			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
 			 if(!f.exists())f.mkdirs();
 			 FileOutputStream out = new FileOutputStream(path);
-			IOUtils.copy(in, out);
+			 IOUtils.copy(in, out);
 			 return Result.success(path.replace(addressPath, ""));
 		} catch (IOException e) {
 			return Result.failure(e.getMessage());

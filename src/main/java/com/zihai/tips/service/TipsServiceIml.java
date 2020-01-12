@@ -97,7 +97,7 @@ public class TipsServiceIml implements TipsService{
 
 	@Override
 	public void like(Document document) {
-		String username = document.getString("username"); //SecurityUtils.getSubject().getPrincipal().toString();
+		String username = document.getString("username");
 		
 		Document d = null; // finded doc
 		//判断是动态还是评论

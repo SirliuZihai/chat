@@ -36,12 +36,9 @@ public class RequestAspct {
 	public void doBefore(JoinPoint joinPoint){
 		ServletRequestAttributes attr = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
 		HttpServletRequest request = attr.getRequest();
-		
-		try {
-			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			if(currentUser!=null)
-				log.info(currentUser +"request ————"+request.getRequestURL().toString());
-		} catch (Exception e) {
-		}
+		Object principal = SecurityUtils.getSubject().getPrincipal();
+		if(principal != null)
+		log.info(principal.toString() +"request ————"+request.getRequestURL().toString());
+	
 	}
 }

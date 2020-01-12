@@ -29,43 +29,28 @@ public class NotifyController {
 	@RequestMapping(value="countNofify.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result countNofify(){
-		try {
-			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			List<Document> result = notifyService.countNofify(currentUser);
-			return Result.success(null,result);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}	
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		List<Document> result = notifyService.countNofify(currentUser);
+		return Result.success(null,result);
 	}
 	@RequestMapping(value="queryNofify.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result queryNofify(@RequestBody Map<String,Object> filter){
-		try {
-			filter.put("username", SecurityUtils.getSubject().getPrincipal().toString());
-			List<Document> result = notifyService.queryNofify(new Document(filter));
-			return Result.success(null,result);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		filter.put("username", SecurityUtils.getSubject().getPrincipal().toString());
+		List<Document> result = notifyService.queryNofify(new Document(filter));
+		return Result.success(null,result);
 	}
 
 	@RequestMapping(value="ignoreNotify.do",method = RequestMethod.GET)
 	@ResponseBody
 	public Result ignoreNotify(Integer type){
-		try {
-			String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
-			if(type == 0 || type ==1){
-				notifyService.ignoreNotify(1,currentUser);
-				notifyService.ignoreNotify(0,currentUser);
-			}else{
-				notifyService.ignoreNotify(type,currentUser);
-			}
-			return Result.success(null);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}	
+		String currentUser = SecurityUtils.getSubject().getPrincipal().toString();
+		if(type == 0 || type ==1){
+			notifyService.ignoreNotify(1,currentUser);
+			notifyService.ignoreNotify(0,currentUser);
+		}else{
+			notifyService.ignoreNotify(type,currentUser);
+		}
+		return Result.success(null);
 	}
 }

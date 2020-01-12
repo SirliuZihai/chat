@@ -16,7 +16,7 @@ public interface EventService {
 	 * @throws JsonProcessingException 
 	 * @throws IOException 
 	 * */
-	public void insertMessage(Document message) throws IOException;
+	public void insertMessage(Document message);
 	
 
 	/**
@@ -43,15 +43,15 @@ public interface EventService {
 	 * 接受邀请
 	 * operMan 将 addMan 加入事件中
 	 * */
-	public void addRelation(String _id,String addMan,String operMan) throws IOException;
+	public void addRelation(String _id,String addMan,String operMan);
 	/**
 	 * 保存事件，联系人邀请
 	 * */
-	public void save(Document event) throws IOException;
+	public void save(Document event);
 	/**
 	 * 保存事件，联系人强拉
 	 * */
-	public void saveAndRelate(Document event) throws IOException;
+	public void saveAndRelate(Document event);
 	/**
 	 * 查询事件,
 	 * @return no found is null

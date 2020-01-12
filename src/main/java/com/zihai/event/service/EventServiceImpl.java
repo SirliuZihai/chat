@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -18,11 +20,13 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.Block;
 import com.mongodb.client.result.DeleteResult;
@@ -56,7 +60,7 @@ public class EventServiceImpl implements EventService {
 		type
 	 * */
 	@Override
-	public void insertMessage(Document message) throws IOException {
+	public void insertMessage(Document message) {
 		//insert message 
 		MongoUtil.getCollection("message").insertOne(message.append("_id", new ObjectId()));
 		//insert event_queue
@@ -95,8 +99,15 @@ public class EventServiceImpl implements EventService {
 			if(session!=null){
 				List list_event = new ArrayList<Document>();	
 				list_event.add(message);
-				String result = new ObjectMapper().writeValueAsString(list_event);				
-				session.sendMessage(new TextMessage("0001"+result));	
+				
+				try {
+					String result = new ObjectMapper().writeValueAsString(list_event);				
+					session.sendMessage(new TextMessage("0001"+result));
+				} catch (JsonProcessingException e) {
+					new RuntimeException(e);
+				} catch (IOException e) {
+					new RuntimeException(e);
+				}	
 				updateEventState(send);
 			}
 		}
@@ -208,7 +219,7 @@ public class EventServiceImpl implements EventService {
 		return l;
 	}
 	@Override
-	public void save(Document event) throws IOException {
+	public void save(Document event) {
 		String username = event.getString("username");
 		event.remove("num");
 		String message; //save or update
@@ -247,7 +258,7 @@ public class EventServiceImpl implements EventService {
 		insertMessage(new Document("relateId",new ObjectId(event.getString("_id"))).append("data", message).append("type", "operate").append("sender", username));
 	}
 	@Override
-	public void saveAndRelate(Document event) throws IOException {
+	public void saveAndRelate(Document event){
 		String username = event.getString("username");
 		event.remove("num");
 		String message; //save or update
@@ -278,7 +289,7 @@ public class EventServiceImpl implements EventService {
 		
 	
 	@Override
-	public void addRelation(String _id,String people,String username) throws IOException {
+	public void addRelation(String _id,String people,String username) {
 		String message =people +"加入了事件中";
 		Document filter = new Document("_id",new ObjectId(_id)).append("username", username);
 		Document update = new Document("$addToSet",new Document("relationship",people));
@@ -294,7 +305,7 @@ public class EventServiceImpl implements EventService {
 	/**
 	 * evet id: OjectId
 	 * */
-	private void sendHomeEvent(Document event ) throws IOException{
+	private void sendHomeEvent(Document event ){
 		//add notify others and self into event_queue
 		List<Document> list = new ArrayList<Document>();
 		if(!CollectionUtils.isEmpty(event.getList("relationship", String.class)))
@@ -313,8 +324,12 @@ public class EventServiceImpl implements EventService {
 			if(session!=null){
 				List list_event = new ArrayList<Document>();
 				list_event.add(event);
-				String result = new ObjectMapper().writeValueAsString(list_event);				
-				session.sendMessage(new TextMessage("0000"+result));	
+				try {
+					String result = new ObjectMapper().writeValueAsString(list_event);				
+					session.sendMessage(new TextMessage("0000"+result));
+				} catch (Exception e) {
+					new RuntimeException(e);
+				}
 				updateEventState(send);
 			}
 		}	
@@ -375,8 +390,8 @@ public class EventServiceImpl implements EventService {
 		//通知其他人
 		try {
 			insertMessage(new Document("relateId",event.getObjectId("_id")).append("sender",username).append("receiver",relationship).append("data",message).append("type", "operate"));
-		} catch (IOException e) {
-			log.error(e.getMessage());
+		} catch (Exception e) {
+			new RuntimeException(e);
 		}
 	}
 	public static void main(String[] args) {

@@ -65,29 +65,17 @@ public class TipsController {
 	@ResponseBody
 	public Result add(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			data.put("publisher", username);
-			tipService.addTip(new Document(data));
-			return Result.success("发布成功");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		data.put("publisher", username);
+		tipService.addTip(new Document(data));
+		return Result.success("发布成功");
 	}
 	@RequestMapping(value="/deleteTip.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result delete(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			data.put("publisher", username);
-			tipService.deleteTip(new Document(data));
-			return Result.success("已删除");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		data.put("publisher", username);
+		tipService.deleteTip(new Document(data));
+		return Result.success("已删除");
 	}
 	@RequestMapping(value="/updateTip.do",method = RequestMethod.POST)
 	@ResponseBody
@@ -100,55 +88,32 @@ public class TipsController {
 	@ResponseBody
 	public Result queryTips(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			List list = tipService.queryTip(new Document(data), username);
-			return Result.success(null,list);
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}	
+		List list = tipService.queryTip(new Document(data), username);
+		return Result.success(null,list);
 	}
 	@RequestMapping(value="/like.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result support(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			data.put("username", username);
-			tipService.like(new Document(data));
-			return Result.success(null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		data.put("username", username);
+		tipService.like(new Document(data));
+		return Result.success(null);
+		
 	}
 	@RequestMapping(value="/comment.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result comment(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			data.put("publisher", username);
-			tipService.addComment(new Document(data));
-			return Result.success("添加成功");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		data.put("publisher", username);
+		tipService.addComment(new Document(data));
+		return Result.success("添加成功");
 	}
 	@RequestMapping(value="/removeComment.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result removeComment(@RequestBody Map<String,Object> data){
 		String username = SecurityUtils.getSubject().getPrincipal().toString();
-		try {
-			data.put("publisher", username);
-			tipService.removeComment(new Document(data));
-			return Result.success("删除成功");
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return Result.failure(e.getMessage());		
-		}
+		data.put("publisher", username);
+		tipService.removeComment(new Document(data));
+		return Result.success("删除成功");
 	}
 }
