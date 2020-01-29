@@ -100,6 +100,13 @@ public class TipsController {
 		return Result.success(null);
 		
 	}
+	@RequestMapping(value="/getComments.do",method = RequestMethod.GET)
+	@ResponseBody
+	public Result getComments(String tipId){
+		String username = SecurityUtils.getSubject().getPrincipal().toString();
+		Document comments = tipService.getComments(tipId,username);
+		return Result.success(null,comments);
+	}
 	@RequestMapping(value="/comment.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result comment(@RequestBody Map<String,Object> data){

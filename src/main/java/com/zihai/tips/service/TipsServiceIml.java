@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.mongodb.Block;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.zihai.notify.service.NotifyService;
 import com.zihai.util.BusinessException;
@@ -122,15 +124,19 @@ public class TipsServiceIml implements TipsService{
 					.append("sender",username).append("receiver", other)
 					 .append("state", 0).append("type", 0).append("content", content);
 			notifyService.addNotify(d1);
-		}else{
+		}else if(StringUtils.isEmpty(document.getString("replyId"))){
 			//评论
 			String content = null;
-			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", new ObjectId(document.getString("commentId")));
+			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", document.getString("commentId"));
+			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			List<Document> arrayfileters = new ArrayList<Document>();
+			arrayfileters.add(new Document("comment._id",document.getString("commentId")));
+			updateOptions.arrayFilters(arrayfileters);
 			if(true == document.getBoolean("like")){
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.likes",username)));
+				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.$[comment].likes",username)),updateOptions);
 				content = username+"点赞了您的评论";
 			}else{
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.likes",username)));
+				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.$[comment].likes",username)),updateOptions);
 				content = username+"取消点赞了您的评论";
 			}
 			if(d == null){
@@ -138,6 +144,31 @@ public class TipsServiceIml implements TipsService{
 			}
 			//通知相联人 tips.customer.publisher
 			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
+			Document d1 =  new Document("relateId",document.getString("commentId"))
+					.append("sender",username).append("receiver", other)
+					 .append("state", 0).append("type", 0).append("content", content);
+			notifyService.addNotify(d1);
+		}else {
+			//回复
+			String content = null;
+			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", document.getString("commentId")).append("comments.replys._id", document.getString("replyId"));
+			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			List<Document> arrayfileters = new ArrayList<Document>();
+			arrayfileters.add(new Document("comment._id",document.getString("commentId")));
+			arrayfileters.add(new Document("reply._id",document.getString("replyId")));
+			updateOptions.arrayFilters(arrayfileters);
+			if(true == document.getBoolean("like")){
+				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
+				content = username+"点赞了您的回复";
+			}else{
+				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
+				content = username+"取消点赞了您的回复";
+			}
+			if(d == null){
+				throw new BusinessException("无效操作");
+			}
+			//通知相联人 tips.customer.publisher
+			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.replys.publisher",1)).first().getList("comments", Document.class).get(0).getList("replys", Document.class).get(0).getString("publisher");
 			Document d1 =  new Document("relateId",document.getString("commentId"))
 					.append("sender",username).append("receiver", other)
 					 .append("state", 0).append("type", 0).append("content", content);
@@ -154,42 +185,46 @@ public class TipsServiceIml implements TipsService{
 		if(StringUtils.isEmpty(content)){
 			throw new BusinessException("内容不能为空");
 		}
-		ObjectId id = new ObjectId();
+		String id = new ObjectId().toHexString();
 		String publisher =document.getString("publisher");
+		String receiver =document.getString("receiver");
 		Document entity = new Document();
 		entity.put("publisher", publisher);
+		entity.put("receiver", receiver);
 		entity.put("likes", new ArrayList<String>());
 		entity.put("_id", id);
 		entity.put("content", content);
 		UpdateResult result = null; // finded doc
 		if(StringUtils.isEmpty(commentId)){
 			Document filter = new Document("_id",new ObjectId(document.getString("_id")));
-			entity.put("reply", new ArrayList<String>()); //初始化 回复
+			entity.put("replys", new ArrayList<String>()); //初始化 回复
 			result = MongoUtil.getCollection("tips").updateOne(filter,new Document("$push",new Document("comments",entity)));
 			if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.publisher
-			String other = MongoUtil.getCollection("tips").find(
-					new Document(filter)).projection(new Document("publisher",1)).first().getString("publisher");
+			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments",1)).first().getList("comments", Document.class).get(0).getString("publisher");
 			Document d =  new Document("relateId",new ObjectId(document.getString("_id")))
-					.append("sender",publisher).append("receiver", other)
+					.append("sender",publisher).append("receiver", other).append("content", publisher+"评论了您")
 					 .append("state", 0).append("type", 1);
 			notifyService.addNotify(d);
 		}else{
-			ObjectId ob_commentId = new ObjectId(commentId);
-			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", ob_commentId);
-			result = MongoUtil.getCollection("tips").updateOne(filter,new Document("$push",new Document("comments.reply",entity)));
+			Document filter = new Document("_id",new ObjectId(document.getString("_id")));
+			UpdateOptions updateOptions = new UpdateOptions();
+			List<Document> arrayfileters = new ArrayList<Document>();
+			arrayfileters.add(new Document("comment._id",commentId));
+			updateOptions.arrayFilters(arrayfileters);
+			result = MongoUtil.getCollection("tips").updateOne(filter,new Document("$push",new Document("comments.$[comment].replys",entity)),updateOptions);
 			if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.customer.publisher
-			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
-			Document d =  new Document("relateId",commentId)
-					.append("sender",publisher).append("receiver", other)
+			Document d =  new Document("relateId",new ObjectId(document.getString("_id")))
+					.append("sender",publisher).append("receiver", receiver).append("content", publisher+"回复了您")
 					 .append("state", 0).append("type", 1);
+			notifyService.addNotify(d);
 		}
-	return id.toHexString();
+	return id;
 	}
 
 	@Override
@@ -202,24 +237,30 @@ public class TipsServiceIml implements TipsService{
 			throw new BusinessException("id 不能为空");
 		}
 		ObjectId o_id = new ObjectId(_id);
-		ObjectId o_commentId = new ObjectId(commentId);
 		UpdateResult result = null; // finded doc
 		if(StringUtils.isEmpty(replyId)){	
-			Document filter = new Document("_id",o_id).append("comments._id", o_commentId).append("comments.publisher", publisher);
-			Document opBson  = Document.parse(String.format("{$pull:{comments:{$eq:['comments._id',ObjectId('%s')]}}}", commentId));
-			log.info("removeComment filter ==="+JSON.toJSONString(filter));
-			log.info("removeComment opBson ==="+JSON.toJSONString(opBson));
+			Document filter = new Document("_id",o_id).append("comments._id", commentId).append("comments.publisher", publisher);
+			Document opBson  = Document.parse(String.format("{$pull:{comments:{'_id':'%s','publisher':'%s'}}}", commentId,publisher));
 			result = MongoUtil.getCollection("tips").updateOne(filter,opBson);
 		}
 		else {
-			Document filter = new Document("_id",o_id).append("comments._id", o_commentId).append("comments.reply._id", o_id).append("comments.reply.publisher", publisher);
-			Document opBson  = Document.parse(String.format("{$pull:{comments.reply:{$eq:['comments.reply._id',ObjectId('%s')]}}}", replyId));
-			log.info("removeComment filter ==="+JSON.toJSONString(filter));
-			log.info("removeComment opBson ==="+JSON.toJSONString(opBson));
+			Document filter = new Document("_id",o_id).append("comments._id", commentId).append("comments.replys._id", replyId).append("comments.replys.publisher", publisher);
+			Document opBson  = Document.parse(String.format("{$pull:{'comments.$.replys':{'_id':'%s','publisher':'%s'}}}", replyId,publisher));
 			result = MongoUtil.getCollection("tips").updateOne(filter,opBson);
 		}
 		if(result.isModifiedCountAvailable()&&result.getModifiedCount() == 0){
 			throw new BusinessException("无效操作");
 		}
+	}
+
+	@Override
+	public Document getComments(String tipId,String username) {	
+		//Document doc = MongoUtil.getCollection("tips").find(new Document("_id",new ObjectId(tipId))).projection(new Document("comments",1)).first();
+		List<Document> pipleline = new ArrayList<Document>();
+		pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s')}}", tipId)));
+		pipleline.add(Document.parse("{$project:{comments:1}}"));
+		pipleline.add(Document.parse(String.format("{$addFields:{'comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': '$$co.replys','as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username)));
+		log.info("getComments===="+ JSON.toJSONString(pipleline));
+		return MongoUtil.getCollection("tips").aggregate(pipleline).first();
 	}
 }

@@ -40,9 +40,9 @@ public class NotifyServiceImpl implements NotifyService {
 		Integer type = filter.getInteger("type");
 		if(type>=5){
 			if(type == 5){ //申请的
-				pipeline.add(Document.parse(String.format("{$match:{sender:'%s',type:{$gte:5}}}",filter.getString("username"))));
+				pipeline.add(Document.parse(String.format("{$match:{sender:'%s',type:{$gt:4}}}",filter.getString("username"))));
 			}else if(filter.getInteger("type") == 6){//待处理的
-				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$gte:5}}}",filter.getString("username"))));
+				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$gt:4}}}",filter.getString("username"))));
 			}else {
 				throw new BusinessException("无效参数");
 			}
@@ -51,7 +51,7 @@ public class NotifyServiceImpl implements NotifyService {
 			pipeline.add(new Document("$addFields",Document.parse("{e_title:'$e_list.title'}")));
 		}else{
 			if(type == 0||type ==1 ){ //通知的
-				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$lte:4}}}}",filter.getString("username"))));
+				pipeline.add(Document.parse(String.format("{$match:{receiver:'%s',type:{$lt:4}}}}",filter.getString("username"))));
 			}else {
 				throw new BusinessException("无效参数");
 			}

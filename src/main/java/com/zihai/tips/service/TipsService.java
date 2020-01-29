@@ -37,5 +37,10 @@ public interface TipsService {
 	 * @param 
 	 */
 	public void removeComment(Document document);
+	/**
+	 * 获取评论及回复
+	 * @return 
+	 * */
+	public Document getComments(String tipId,String username);
 	
 }
