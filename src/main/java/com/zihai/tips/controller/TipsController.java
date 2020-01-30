@@ -91,6 +91,13 @@ public class TipsController {
 		List list = tipService.queryTip(new Document(data), username);
 		return Result.success(null,list);
 	}
+	@RequestMapping(value="/queryTips_notify.do",method = RequestMethod.POST)
+	@ResponseBody
+	public Result queryTips_notify(@RequestBody Map<String,Object> data){
+		String username = SecurityUtils.getSubject().getPrincipal().toString();
+		Document doc = tipService.queryTipNotify(new Document(data), username);
+		return Result.success(null,doc);
+	}
 	@RequestMapping(value="/like.do",method = RequestMethod.POST)
 	@ResponseBody
 	public Result support(@RequestBody Map<String,Object> data){

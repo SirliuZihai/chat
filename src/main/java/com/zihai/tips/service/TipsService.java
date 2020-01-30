@@ -19,6 +19,12 @@ public interface TipsService {
 	 * */
 	public List queryTip(Document document,String username);
 	/**
+	 * 通知显示的动态
+	 * {tipId commentId replyId}
+	 * */
+	public Document queryTipNotify(Document document, String username);
+
+	/**
 	 * 点赞/取消
 	 * 
 	 * document{_id:'',commentId:'',replyId:'',like:true}+ username

@@ -204,7 +204,7 @@ public class TipsServiceIml implements TipsService{
 			}
 			//通知相联人 tips.publisher
 			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments",1)).first().getList("comments", Document.class).get(0).getString("publisher");
-			Document d =  new Document("relateId",new ObjectId(document.getString("_id")))
+			Document d =  new Document("relateId",document.getString("_id")+"_"+id)
 					.append("sender",publisher).append("receiver", other).append("content", publisher+"评论了您")
 					 .append("state", 0).append("type", 1);
 			notifyService.addNotify(d);
@@ -219,7 +219,7 @@ public class TipsServiceIml implements TipsService{
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.customer.publisher
-			Document d =  new Document("relateId",new ObjectId(document.getString("_id")))
+			Document d =  new Document("relateId",document.getString("_id")+"_"+commentId+"_"+id)
 					.append("sender",publisher).append("receiver", receiver).append("content", publisher+"回复了您")
 					 .append("state", 0).append("type", 1);
 			notifyService.addNotify(d);
@@ -261,6 +261,27 @@ public class TipsServiceIml implements TipsService{
 		pipleline.add(Document.parse("{$project:{comments:1}}"));
 		pipleline.add(Document.parse(String.format("{$addFields:{'comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': '$$co.replys','as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username)));
 		log.info("getComments===="+ JSON.toJSONString(pipleline));
+		return MongoUtil.getCollection("tips").aggregate(pipleline).first();
+	}
+
+	@Override
+	public Document queryTipNotify(Document document, String username) {
+		List<Document> pipleline = new ArrayList<Document>();
+		if(StringUtils.isEmpty(document.getString("commentId"))){
+			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s')}", document.getString("tipId"))));
+		}else if(StringUtils.isEmpty(document.getString("replyId"))){
+			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s'),'comments._id':'%s'}}", document.getString("tipId"),document.getString("commentId"))));
+		}else{
+			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s'),'comments._id':'%s','comments.replys._id':'%s'}}", document.getString("tipId"),document.getString("commentId"),document.getString("replyId"))));
+		}
+		 //关联 事件
+		pipleline.add(new Document().append("$lookup", new Document().append("from", "event")
+					.append("localField", "eventId").append("foreignField", "_id").append("as", "e_list"))); //r_list.tag in range
+		pipleline.add(new Document().append("$unwind",new Document().append("path", "$e_list").append("preserveNullAndEmptyArrays", false)));
+		pipleline.add(Document.parse(String.format("{$addFields:{commentsNum:{$size: '$comments'},'comments':{'$filter':{'input': '$comments','as': 'co2','cond':{$eq:['$$co2._id','%s']}}}}}",document.getString("commentId"))));
+		pipleline.add(Document.parse(String.format("{$addFields:{event_isJoin:{$or:[{$eq:['$e_list.username','%s']},{$in:['%s','$e_list.relationship']}]},event_title:'$e_list.title',_id:{$toString:'$_id'},eventId:{$toString:'$eventId'},likesNum:{$size: '$likes'},likes:{$in:['%s','$likes']},event_starttime:'$e_list.starttime',event_endtime:'$e_list.endtime','comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': '$$co.replys','as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username,username,username,username)));
+		pipleline.add(Document.parse("{$project:{e_list:0}}"));
+		log.info("queryTipNotify===="+ JSON.toJSONString(pipleline));
 		return MongoUtil.getCollection("tips").aggregate(pipleline).first();
 	}
 }

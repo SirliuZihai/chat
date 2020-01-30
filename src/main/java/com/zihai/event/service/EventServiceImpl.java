@@ -220,6 +220,9 @@ public class EventServiceImpl implements EventService {
 	}
 	@Override
 	public void save(Document event) {
+		//verify title
+		if(StringUtils.isEmpty(event.getString("title")))
+			throw new BusinessException("标题不能为空");
 		String username = event.getString("username");
 		event.remove("num");
 		String message; //save or update
@@ -337,7 +340,7 @@ public class EventServiceImpl implements EventService {
 	
 	private void inviteOther(String username,String event_id,List<String> rela){
 		//if has relationship ,clear and notify it 邀请
-		if((!CollectionUtils.isEmpty(rela))&&(!"nicool".equals(username))){
+		if((!CollectionUtils.isEmpty(rela))){
 			for(String other : rela){
 				Document d =  new Document("relateId",new ObjectId(event_id))
 						.append("sender",username).append("receiver", other)
