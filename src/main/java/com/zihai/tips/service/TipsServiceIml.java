@@ -211,7 +211,7 @@ public class TipsServiceIml implements TipsService{
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.publisher
-			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments",1)).first().getList("comments", Document.class).get(0).getString("publisher");
+			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("publisher",1)).first().getString("publisher");
 			Document d =  new Document("relateId",document.getString("_id")+"_"+id)
 					.append("sender",publisher).append("receiver", other).append("content", publisher+"评论了您")
 					 .append("state", 0).append("type", 1);
