@@ -101,26 +101,26 @@ public class TipsServiceIml implements TipsService{
 	public void like(Document document) {
 		String username = document.getString("username");
 		
-		Document d = null; // finded doc
+		UpdateResult d = null; // finded doc
 		//判断是动态还是评论
 		if(StringUtils.isEmpty(document.getString("commentId"))){
 			//动态
 			Document filter = new Document("_id",new ObjectId(document.getString("_id")));
 			String content = null;
 			if(true == document.getBoolean("like")){
-				 d=MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("likes",username)));
+				 d=MongoUtil.getCollection("tips").updateOne(filter,new Document("$addToSet", new Document("likes",username)));
 				 content = username+"点赞了您的动态";
 			}else{
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("likes",username)));				
+				d = MongoUtil.getCollection("tips").updateOne(filter,new Document("$pull", new Document("likes",username)));				
 				content = username+"取消点赞了您的动态";
 			}
-			if(d == null){
+			if(d.isModifiedCountAvailable()&&d.getModifiedCount()==0){
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.publisher
 			String other = MongoUtil.getCollection("tips").find(
 					new Document(filter)).projection(new Document("publisher",1)).first().getString("publisher");
-			Document d1 =  new Document("relateId",new ObjectId(document.getString("_id")))
+			Document d1 =  new Document("relateId",document.getString("_id"))
 					.append("sender",username).append("receiver", other)
 					 .append("state", 0).append("type", 0).append("content", content);
 			notifyService.addNotify(d1);
@@ -128,23 +128,27 @@ public class TipsServiceIml implements TipsService{
 			//评论
 			String content = null;
 			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", document.getString("commentId"));
-			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			UpdateOptions updateOptions = new UpdateOptions();
 			List<Document> arrayfileters = new ArrayList<Document>();
 			arrayfileters.add(new Document("comment._id",document.getString("commentId")));
 			updateOptions.arrayFilters(arrayfileters);
 			if(true == document.getBoolean("like")){
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.$[comment].likes",username)),updateOptions);
+				d = MongoUtil.getCollection("tips").updateOne(filter,new Document("$addToSet", new Document("comments.$[comment].likes",username)),updateOptions);
 				content = username+"点赞了您的评论";
 			}else{
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.$[comment].likes",username)),updateOptions);
+				d = MongoUtil.getCollection("tips").updateOne(filter,new Document("$pull", new Document("comments.$[comment].likes",username)),updateOptions);
 				content = username+"取消点赞了您的评论";
 			}
-			if(d == null){
+			if(d.isModifiedCountAvailable()&&d.getModifiedCount()==0){
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.customer.publisher
-			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.publisher",1)).first().getList("comments", Document.class).get(0).getString("publisher");
-			Document d1 =  new Document("relateId",document.getString("commentId"))
+			Document projection = Document.parse(String.format("{'$project':{'comments': {'$map': {'input': {'$filter':{'input': '$comments','as': 'co2','cond':{$eq:['$$co2._id','%s']}}},'as': 'co','in': {'publisher':'$$co.publisher'}}}}}", document.getString("commentId")));
+			List<Document> pipleline = new ArrayList<Document>();
+			pipleline.add(new Document("$match",filter));
+			pipleline.add(projection);
+			String other = MongoUtil.getCollection("tips").aggregate(pipleline).first().getList("comments", Document.class).get(0).getString("publisher");
+			Document d1 =  new Document("relateId",document.getString("_id")+"_"+document.getString("commentId"))
 					.append("sender",username).append("receiver", other)
 					 .append("state", 0).append("type", 0).append("content", content);
 			notifyService.addNotify(d1);
@@ -152,24 +156,28 @@ public class TipsServiceIml implements TipsService{
 			//回复
 			String content = null;
 			Document filter = new Document("_id",new ObjectId(document.getString("_id"))).append("comments._id", document.getString("commentId")).append("comments.replys._id", document.getString("replyId"));
-			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			UpdateOptions updateOptions = new UpdateOptions();
 			List<Document> arrayfileters = new ArrayList<Document>();
 			arrayfileters.add(new Document("comment._id",document.getString("commentId")));
 			arrayfileters.add(new Document("reply._id",document.getString("replyId")));
 			updateOptions.arrayFilters(arrayfileters);
 			if(true == document.getBoolean("like")){
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$addToSet", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
+				d = MongoUtil.getCollection("tips").updateOne(filter,new Document("$addToSet", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
 				content = username+"点赞了您的回复";
 			}else{
-				d = MongoUtil.getCollection("tips").findOneAndUpdate(filter,new Document("$pull", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
+				d = MongoUtil.getCollection("tips").updateOne(filter,new Document("$pull", new Document("comments.$[comment].replys.$[reply].likes",username)),updateOptions);
 				content = username+"取消点赞了您的回复";
 			}
-			if(d == null){
+			if(d.isModifiedCountAvailable()&&d.getModifiedCount()==0){
 				throw new BusinessException("无效操作");
 			}
 			//通知相联人 tips.customer.publisher
-			String other = MongoUtil.getCollection("tips").find(filter).projection(new Document("comments.replys.publisher",1)).first().getList("comments", Document.class).get(0).getList("replys", Document.class).get(0).getString("publisher");
-			Document d1 =  new Document("relateId",document.getString("commentId"))
+			Document projection = Document.parse(String.format("{'$project':{'comments': {'$map': {'input': {'$filter':{'input': '$comments','as': 'co2','cond':{$eq:['$$co2._id','%s']}}},'as': 'co','in': {'publisher':'$$co.publisher','replys':{'$map':{'input': {'$filter':{'input': '$$co.replys','as': 're2','cond':{$eq:['$$re2._id','%s']}}},'as': 're','in':{'publisher':'$$re.publisher'}}}}}}}}", document.getString("commentId"),document.getString("replyId")));
+			List<Document> pipleline = new ArrayList<Document>();
+			pipleline.add(new Document("$match",filter));
+			pipleline.add(projection);
+			String other =MongoUtil.getCollection("tips").aggregate(pipleline).first().getList("comments", Document.class).get(0).getList("replys", Document.class).get(0).getString("publisher");
+			Document d1 =  new Document("relateId",document.getString("_id")+"_"+document.getString("commentId")+"_"+document.getString("replyId"))
 					.append("sender",username).append("receiver", other)
 					 .append("state", 0).append("type", 0).append("content", content);
 			notifyService.addNotify(d1);
@@ -268,7 +276,7 @@ public class TipsServiceIml implements TipsService{
 	public Document queryTipNotify(Document document, String username) {
 		List<Document> pipleline = new ArrayList<Document>();
 		if(StringUtils.isEmpty(document.getString("commentId"))){
-			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s')}", document.getString("tipId"))));
+			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s')}}", document.getString("tipId"))));
 		}else if(StringUtils.isEmpty(document.getString("replyId"))){
 			pipleline.add(Document.parse(String.format("{$match:{_id:ObjectId('%s'),'comments._id':'%s'}}", document.getString("tipId"),document.getString("commentId"))));
 		}else{
@@ -279,7 +287,12 @@ public class TipsServiceIml implements TipsService{
 					.append("localField", "eventId").append("foreignField", "_id").append("as", "e_list"))); //r_list.tag in range
 		pipleline.add(new Document().append("$unwind",new Document().append("path", "$e_list").append("preserveNullAndEmptyArrays", false)));
 		pipleline.add(Document.parse(String.format("{$addFields:{commentsNum:{$size: '$comments'},'comments':{'$filter':{'input': '$comments','as': 'co2','cond':{$eq:['$$co2._id','%s']}}}}}",document.getString("commentId"))));
-		pipleline.add(Document.parse(String.format("{$addFields:{event_isJoin:{$or:[{$eq:['$e_list.username','%s']},{$in:['%s','$e_list.relationship']}]},event_title:'$e_list.title',_id:{$toString:'$_id'},eventId:{$toString:'$eventId'},likesNum:{$size: '$likes'},likes:{$in:['%s','$likes']},event_starttime:'$e_list.starttime',event_endtime:'$e_list.endtime','comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': '$$co.replys','as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username,username,username,username)));
+		if("0".equals(document.getString("type"))){
+			//点赞情况
+			pipleline.add(Document.parse(String.format("{$addFields:{event_isJoin:{$or:[{$eq:['$e_list.username','%s']},{$in:['%s','$e_list.relationship']}]},event_title:'$e_list.title',_id:{$toString:'$_id'},eventId:{$toString:'$eventId'},likesNum:{$size: '$likes'},likes:{$in:['%s','$likes']},event_starttime:'$e_list.starttime',event_endtime:'$e_list.endtime','comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': {'$filter':{'input': '$$co.replys','as': 're2','cond':{$eq: ['$$re2._id', '%s']}}},'as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username,username,username,document.getString("replyId"),username)));			
+		}else{//评论情况
+			pipleline.add(Document.parse(String.format("{$addFields:{event_isJoin:{$or:[{$eq:['$e_list.username','%s']},{$in:['%s','$e_list.relationship']}]},event_title:'$e_list.title',_id:{$toString:'$_id'},eventId:{$toString:'$eventId'},likesNum:{$size: '$likes'},likes:{$in:['%s','$likes']},event_starttime:'$e_list.starttime',event_endtime:'$e_list.endtime','comments': {'$map': {'input': '$comments','as': 'co','in': {'_id': '$$co._id','content': '$$co.content','publisher':'$$co.publisher','likes':{$in:['%s','$$co.likes']},'likesNum': { '$size':'$$co.likes' },'replys':{'$map':{'input': {'$filter':{'input': '$$co.replys','as': 're2','cond':{$or:[{$eq:['$$re2.publisher','%s']},{$eq:['$$re2.receiver','%s']}]}}},'as': 're','in':{'_id': '$$re._id','content': '$$re.content','receiver': '$$re.receiver','publisher':'$$re.publisher','likes':{$in:['%s','$$re.likes']},'likesNum': { '$size':'$$re.likes' }}}}}}}}}",username,username,username,username,username,username,username)));
+		}
 		pipleline.add(Document.parse("{$project:{e_list:0}}"));
 		log.info("queryTipNotify===="+ JSON.toJSONString(pipleline));
 		return MongoUtil.getCollection("tips").aggregate(pipleline).first();

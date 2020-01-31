@@ -20,7 +20,9 @@ public interface TipsService {
 	public List queryTip(Document document,String username);
 	/**
 	 * 通知显示的动态
-	 * {tipId commentId replyId}
+	 * {tipId commentId replyId type:0 点赞 1评论回复} <br>
+	 * 点赞 只显示点赞内容 <br>
+	 * 评论回复 显示与我有关的内容
 	 * */
 	public Document queryTipNotify(Document document, String username);
 
