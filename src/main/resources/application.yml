@@ -15,6 +15,7 @@ spring:
     multipart:
       max-file-size: 3MB
       max-request-size: 10MB
+      location: /home/zihai/temp/webapp_upload
   mvc:
     view:
       prefix: /page/

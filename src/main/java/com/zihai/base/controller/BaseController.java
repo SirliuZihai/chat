@@ -9,7 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 public class BaseController {
 	
 	//("/test")
-	public void Home(HttpServletRequest req, HttpServletResponse rep) throws IOException{
-		rep.sendRedirect("http://localhost:8080");	
+	public void Home(HttpServletRequest req, HttpServletResponse rep) {
+		try {
+			rep.sendRedirect("http://localhost:8080");
+		} catch (IOException e) {
+		}	
 	}
 }
