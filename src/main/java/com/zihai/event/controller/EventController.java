@@ -29,10 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.fastjson.JSON;
 import com.zihai.event.service.EventService;
 import com.zihai.notify.service.NotifyService;
-import com.zihai.util.BusinessException;
 import com.zihai.util.Result;
 
 
@@ -136,7 +134,7 @@ public class EventController {
 	@ResponseBody
 	public Result uploadtempfile(@RequestParam(value="tempFile",required=false)MultipartFile tempFile,HttpServletRequest req) throws MalformedURLException {
 		 String path =tempFilePath+UUID.randomUUID()+tempFile.getOriginalFilename().substring(tempFile.getOriginalFilename().indexOf("."));
-		 log.info(path);
+		 log.info("tempFilepath=="+path);
 		 try { 
 			 InputStream in = tempFile.getInputStream();
 			 File f = new File(path.substring(0,path.lastIndexOf("/")+1));
