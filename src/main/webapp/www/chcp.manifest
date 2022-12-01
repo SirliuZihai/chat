@@ -1,0 +1,106 @@
+[
+  {
+    "file": "dynamic/css/app2.css",
+    "hash": "bbc8ed85696355626571fb87e82f90f1"
+  },
+  {
+    "file": "dynamic/js/app.js",
+    "hash": "1489cd7fe0773dd50acafb70a50bdc91"
+  },
+  {
+    "file": "dynamic/js/manifest.js",
+    "hash": "8def9f056a8244b677dbd42be7bfc987"
+  },
+  {
+    "file": "dynamic/js/vendor.js",
+    "hash": "9596f4a43899de898d75989b8e353060"
+  },
+  {
+    "file": "index.html",
+    "hash": "44b0f6966c487759205cc7b151bbcd88"
+  },
+  {
+    "file": "index2.html",
+    "hash": "c5afddd9d45b8d942bf03869dea55184"
+  },
+  {
+    "file": "static/css/app.css",
+    "hash": "9138672ad464f36659a36daf9a517d97"
+  },
+  {
+    "file": "static/css/framework7.bundle.css",
+    "hash": "eb260c091071e18ab1876b15bfc29d91"
+  },
+  {
+    "file": "static/fonts/Framework7Icons-Regular.eot",
+    "hash": "28db829912bb402df5b1e6fb16f1908c"
+  },
+  {
+    "file": "static/fonts/Framework7Icons-Regular.ttf",
+    "hash": "111371010ef70bbcf7e6968abc8e2fb2"
+  },
+  {
+    "file": "static/fonts/Framework7Icons-Regular.woff",
+    "hash": "5fce7c1238bad823bee064bd127fe4cd"
+  },
+  {
+    "file": "static/fonts/Framework7Icons-Regular.woff2",
+    "hash": "19158ff09eb907432a7ccacd074ef9d5"
+  },
+  {
+    "file": "static/fonts/MaterialIcons-Regular.eot",
+    "hash": "e79bfd88537def476913f3ed52f4f4b3"
+  },
+  {
+    "file": "static/fonts/MaterialIcons-Regular.svg",
+    "hash": "a1adea65594c502f9d9428f13ae210e1"
+  },
+  {
+    "file": "static/fonts/MaterialIcons-Regular.ttf",
+    "hash": "a37b0c01c0baf1888ca812cc0508f6e2"
+  },
+  {
+    "file": "static/fonts/MaterialIcons-Regular.woff",
+    "hash": "012cf6a10129e2275d79d6adac7f3b02"
+  },
+  {
+    "file": "static/fonts/MaterialIcons-Regular.woff2",
+    "hash": "570eb83859dc23dd0eec423a49e147fe"
+  },
+  {
+    "file": "static/img/beach.jpg",
+    "hash": "e1694a6448f515a80fc46be9b7a4dee0"
+  },
+  {
+    "file": "static/img/f7-icon.png",
+    "hash": "3cfdd12c6423634b723590811a9eed9c"
+  },
+  {
+    "file": "static/img/lock.jpg",
+    "hash": "1a83adb6a12c46e7c23ff4e909c16c0f"
+  },
+  {
+    "file": "static/img/monkey.jpg",
+    "hash": "9180b3c5a64ae0b68f4a763fe8f85362"
+  },
+  {
+    "file": "static/img/mountains.jpg",
+    "hash": "d17372e7b090a78122ac9d9dcc8800ae"
+  },
+  {
+    "file": "static/js/framework7-vue.bundle.js",
+    "hash": "7911c2f3b3b763ca02940f7865ce1d5b"
+  },
+  {
+    "file": "static/js/framework7.bundle.js",
+    "hash": "6a02094cfa562636e5ea0e01b62f13ea"
+  },
+  {
+    "file": "static/js/lib/bdmap.js",
+    "hash": "ce2d48ae46a44f73f2a3330f19907674"
+  },
+  {
+    "file": "static/js/vue.min.js",
+    "hash": "baa2f3e9801a1924119f400d8046e56a"
+  }
+]
